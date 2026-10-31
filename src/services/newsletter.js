@@ -312,7 +312,7 @@ const WELCOME_HTML = `<!DOCTYPE html>
         <li>🍉 Papaya al 100%</li>
         <li>🥭 Pitaya y más...</li>
       </ul>
-      <p>Visítanos en <a href="https://manoli931025.github.io/deshidratados/">solaria.cu</a> para explorar todo nuestro catálogo.</p>
+      <p>Visítanos en <a href="https://deshidratados.github.io/">solaria.cu</a> para explorar todo nuestro catálogo.</p>
       <p>¡Disfruta tus deshidratados! 🌴</p>
     </div>
     <div class="footer">

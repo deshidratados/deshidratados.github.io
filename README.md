@@ -105,7 +105,7 @@ y solo necesita el dashboard, sin instalar la CLI:
 2. En el repositorio de GitHub: **Settings → Secrets and variables → Actions**, agrega los secrets:
    - `REACT_APP_SUPABASE_URL`
    - `REACT_APP_SUPABASE_ANON_KEY`
-3. El workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) compila la app con esos valores y la publica automáticamente en GitHub Pages. El sitio queda en `https://<usuario>.github.io/<repositorio>/` y el panel en `.../#/admin`.
+3. El workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) compila la app con esos valores y la publica automáticamente en GitHub Pages. El sitio queda en `https://deshidratados.github.io/` y el panel en `.../#/admin`.
 
 ## Scripts
 

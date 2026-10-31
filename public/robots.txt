@@ -2,4 +2,4 @@
 User-agent: *
 Disallow:
 
-Sitemap: https://manoli931025.github.io/deshidratados/sitemap.xml
+Sitemap: https://deshidratados.github.io/sitemap.xml

@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://manoli931025.github.io/deshidratados/</loc>
+    <loc>https://deshidratados.github.io/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://manoli931025.github.io/deshidratados/#/doc/envios</loc>
+    <loc>https://deshidratados.github.io/#/doc/envios</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://manoli931025.github.io/deshidratados/#/doc/terminos</loc>
+    <loc>https://deshidratados.github.io/#/doc/terminos</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://manoli931025.github.io/deshidratados/#/doc/privacidad</loc>
+    <loc>https://deshidratados.github.io/#/doc/privacidad</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://manoli931025.github.io/deshidratados/#/doc/cookies</loc>
+    <loc>https://deshidratados.github.io/#/doc/cookies</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

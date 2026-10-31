@@ -45,7 +45,7 @@ const corsHeaders = {
 
 // Página de confirmación de la tienda (public/unsubscribe.html, publicada
 // por GitHub Pages junto con el resto del sitio).
-const SHOP_PAGE = 'https://manoli931025.github.io/deshidratados/unsubscribe.html';
+const SHOP_PAGE = 'https://deshidratados.github.io/unsubscribe.html';
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
