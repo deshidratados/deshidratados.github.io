@@ -1,0 +1,88 @@
+name: Copia de seguridad de la base de datos
+
+# Copia semanal de la base de datos de Supabase, cifrada y guardada como
+# artifact durante 30 días. En un repo público el artifact lo puede
+# descargar cualquiera, POR ESO VA CIFRADO: sin la frase de cifrado no
+# sirve de nada robarse el archivo (contiene datos de clientes).
+#
+# Requiere dos secrets (Settings → Secrets and variables → Actions):
+#   BACKUP_DB_URL       URL de conexión de Supabase. En el dashboard →
+#                       Connect → «Direct connection» (puerto 5432).
+#   BACKUP_PASSPHRASE   Frase de cifrado que inventes tú. Apúntala en un
+#                       sitio seguro: si la pierdes, las copias no se
+#                       pueden restaurar.
+#
+# Para restaurar una copia (con el cliente pg_restore instalado):
+#   openssl enc -d -aes-256-cbc -pbkdf2 -salt -pass pass:'TU_FRASE' \
+#     -in solaria-AAAA-MM-DD.dump.enc \
+#     | pg_restore --clean --if-exists --no-owner -d 'postgresql://...'
+#
+# Notas:
+#   - «Run workflow» lanza una copia bajo demanda.
+#   - Si el repo pasa 60 días sin actividad, GitHub desactiva los cron;
+#     vuelve a activarlos en la pestaña Actions → Copia de seguridad.
+on:
+  schedule:
+    - cron: '0 4 * * 1' # lunes 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # El cliente de la runner puede quedar por detrás de la versión del
+      # servidor gestionado; instalamos la última desde el repositorio
+      # oficial de PostgreSQL.
+      - name: Instalar el cliente de PostgreSQL (última versión)
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y curl ca-certificates gnupg lsb-release
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            --fail --location https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -y
+          sudo apt-get install -y postgresql-client
+
+      - name: Volcado cifrado
+        env:
+          PG_URL: ${{ secrets.BACKUP_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "$PG_URL" ]; then echo "Falta el secret BACKUP_DB_URL"; exit 1; fi
+          if [ -z "$BACKUP_PASSPHRASE" ]; then echo "Falta el secret BACKUP_PASSPHRASE"; exit 1; fi
+
+          OUT="solaria-$(date -u +%F).dump.enc"
+          OK=0
+          # El proyecto gratuito se duerme tras unos días sin uso: la
+          # primera conexión tarda; reintentamos un par de veces.
+          for intento in 1 2 3; do
+            if pg_dump --no-owner --no-privileges --format=custom "$PG_URL" \
+              | openssl enc -aes-256-cbc -pbkdf2 -salt -pass pass:"$BACKUP_PASSPHRASE" \
+              > "$OUT.tmp" && [ -s "$OUT.tmp" ]; then
+              mv "$OUT.tmp" "$OUT"
+              OK=1
+              break
+            fi
+            echo "Reintento $intento fallido; espero 60 s…"
+            sleep 60
+          done
+          if [ "$OK" != 1 ]; then
+            echo "No se pudo hacer la copia tras 3 intentos."
+            exit 1
+          fi
+          ls -la "$OUT"
+
+      - name: Guardar la copia (artifact, 30 días)
+        uses: actions/upload-artifact@v4
+        with:
+          name: solaria-backup
+          path: solaria-*.dump.enc
+          retention-days: 30
+          if-no-files-found: error
