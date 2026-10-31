@@ -11,6 +11,13 @@
 // La Edge Function lo sustituye en cada email por un enlace firmado
 // personalizado que llama a la función "unsubscribe". No lo borres del
 // HTML si quieres que el enlace de baja funcione.
+//
+// Quién envía qué: los boletines van con la sesión del administrador (la
+// Edge Function la exige); el formulario público de suscripción no tiene
+// sesión y solo puede pedir la bienvenida, cuyo asunto y HTML los fija el
+// servidor.
+
+import { supabase } from '../data/supabase';
 
 const EDGE_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-email`;
 
@@ -20,8 +27,8 @@ const EDGE_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-email`
  * el navegador solo ve la URL de la función y la anon key pública.
  * @param {object} payload
  * @param {string[]} payload.to - Destinatarios
- * @param {string} payload.subject - Asunto
- * @param {string} payload.html - Contenido HTML
+ * @param {string} [payload.subject] - Asunto (opcional en la bienvenida)
+ * @param {string} [payload.html] - Contenido HTML (opcional en la bienvenida)
  * @param {'newsletter'|'welcome'} [payload.type] - Tipo (para el historial)
  * @param {string} [payload.replyTo] - Dirección de respuesta
  * @returns {Promise<{ok: boolean, sent: number, failed: number, remaining: number, errors: Array}>}
@@ -34,12 +41,24 @@ async function callEdgeFunction(payload) {
     throw new Error('REACT_APP_SUPABASE_URL no está definida');
   }
 
+  // El panel manda la sesión del administrador: la Edge Function exige un
+  // usuario autenticado para los boletines. El formulario público de
+  // bienvenida no tiene sesión y se queda con la anon key (pública por
+  // diseño); sin sesión, la función solo acepta su correo automático.
+  let bearer = anonKey || '';
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.access_token) bearer = data.session.access_token;
+  } catch {
+    /* sin sesión: se usa la anon key */
+  }
+
   const headers = {
     'Content-Type': 'application/json',
     // La Edge Function valida este header (apikey) igual que cualquier
     // endpoint de Supabase. No es un secreto: es la anon key pública.
     'apikey': anonKey || '',
-    'Authorization': `Bearer ${anonKey || ''}`,
+    'Authorization': `Bearer ${bearer}`,
   };
 
   let res;
@@ -98,8 +117,10 @@ async function callEdgeFunction(payload) {
         (detail ? `\nDetalle: ${detail}` : '');
     } else if (res.status === 401 || res.status === 403) {
       msg =
-        'Supabase ha rechazado las credenciales de acceso.\n' +
-        'Comprueba REACT_APP_SUPABASE_ANON_KEY en .env.local y reinicia "npm start".' +
+        'La función de correo ha rechazado el envío por falta de permisos.\n' +
+        'Si estás en el panel de administración, sal y vuelve a entrar ' +
+        '(la sesión puede haber caducado). Si el problema continúa, ' +
+        'revisa REACT_APP_SUPABASE_ANON_KEY en .env.local y reinicia "npm start".' +
         (detail ? `\nDetalle: ${detail}` : '');
     } else {
       msg = detail || `El servidor de correo respondió con error ${res.status}.`;
@@ -183,25 +204,20 @@ export async function sendNewsletter(emails, options = {}) {
 }
 
 /**
- * Envía un email de bienvenida a un nuevo suscriptor.
+ * Pide el correo de bienvenida a un nuevo suscriptor.
+ * El asunto y el HTML los fija la Edge Function (plantilla del servidor):
+ * el formulario público no inyecta contenido, solo puede pedir la
+ * bienvenida del correo que ya se ha suscrito.
  * @param {string} email - Email del suscriptor
- * @param {object} options
- * @param {string} [options.subject] - Asunto (opcional)
- * @param {string} [options.html] - HTML (opcional)
- * @returns {Promise<{ok: boolean, id: string, from: string, recipients: number}>}
+ * @returns {Promise<{ok: boolean, sent: number, failed: number, errors: Array}>}
  */
-export async function sendWelcomeEmail(email, options = {}) {
+export async function sendWelcomeEmail(email) {
   if (!email) {
     throw new Error('Falta el email del suscriptor');
   }
 
-  const subject = options.subject || 'Bienvenido a Solaria · Deshidratados 🌴';
-  const html = options.html || WELCOME_HTML;
-
   return callEdgeFunction({
     to: [email],
-    subject,
-    html,
     type: 'welcome',
   });
 }
@@ -279,46 +295,3 @@ ${contentHtml || ''}
 </body>
 </html>`;
 }
-
-const WELCOME_HTML = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bienvenido a Solaria</title>
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f6f0e6; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #C4531F; }
-    .header h1 { margin: 0; color: #C4531F; font-size: 24px; }
-    .content { padding: 20px 0; line-height: 1.6; color: #1e1710; }
-    .content h2 { margin-top: 0; color: #1e1710; }
-    .footer { text-align: center; padding: 20px 0; border-top: 1px solid #e7dcc8; color: #8a7a63; font-size: 12px; }
-    .footer a { color: #C4531F; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>☀ Solaria · Deshidratados</h1>
-    </div>
-    <div class="content">
-      <h2>¡Bienvenido a Solaria!</h2>
-      <p>Gracias por suscribirte a nuestro boletín. A partir de ahora recibirás ofertas exclusivas, nuevas presentaciones y consejos para conservar tus deshidratados.</p>
-      <p>¿Qué encontrarás en nuestro catálogo?</p>
-      <ul>
-        <li>🍌 Mango deshidratado de la mejor calidad</li>
-        <li>🍍 Piña natural sin conservantes</li>
-        <li>🍉 Papaya al 100%</li>
-        <li>🥭 Pitaya y más...</li>
-      </ul>
-      <p>Visítanos en <a href="https://deshidratados.github.io/">solaria.cu</a> para explorar todo nuestro catálogo.</p>
-      <p>¡Disfruta tus deshidratados! 🌴</p>
-    </div>
-    <div class="footer">
-      <p>Hecho con ❤️ para Solaria · Deshidratados</p>
-      <p>¿No quieres recibir más emails? <a href="{{UNSUBSCRIBE_URL}}">Darse de baja</a></p>
-    </div>
-  </div>
-</body>
-</html>`;

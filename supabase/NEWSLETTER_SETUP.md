@@ -536,3 +536,25 @@ Si tienes problemas:
 2. Brevo Dashboard → **Transactional → Emails** (estado de cada envío)
 3. Revisa que el secret esté bien copiado (sin espacios al final)
 4. Consola del navegador (F12) para ver errores del frontend
+
+---
+
+## Seguridad del envío (importante)
+
+La función `send-email` está cerrada a visitantes anónimos:
+
+- **Boletines**: solo se envían con la sesión de un usuario autenticado.
+  Si el panel avisa de «Sesión no válida», sal y vuelve a entrar en el
+  panel de administración.
+- **Bienvenida**: el formulario público puede pedirla sin sesión, pero el
+  servidor ignora el asunto y el HTML del cliente (usa su propia plantilla),
+  exige un único destinatario y que ese correo ya esté suscrito. Así nadie
+  puede usar la función como correo indiscriminado.
+
+Esto se suma a lo que ya debe estar en el dashboard de Supabase:
+
+- **Authentication → Sign In / Providers → «Allow new signups»
+  DESACTIVADO**: si alguien pudiera registrarse por su cuenta, tendría
+  sesión de usuario y con ella acceso de administrador a la base de datos.
+- La función `unsubscribe` es pública a propósito (la pican los suscriptores
+  desde su propio correo), protegida con firma HMAC.
