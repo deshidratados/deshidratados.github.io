@@ -5,6 +5,20 @@ name: Copia de seguridad de la base de datos
 # descargar cualquiera, POR ESO VA CIFRADO: sin la frase de cifrado no
 # sirve de nada robarse el archivo (contiene datos de clientes).
 #
+# Además descarga las fotos del bucket "product-images" como segundo
+# artifact. Esas van SIN cifrar a propósito: el bucket es público (las
+# fotos se sirven por URL a cualquiera), cifrarlas solo añadiría lío a la
+# restauración.
+#
+# Restauración:
+#   - Base de datos:
+#       openssl enc -d -aes-256-cbc -pbkdf2 -salt -pass pass:'TU_FRASE' \
+#         -in solaria-AAAA-MM-DD.dump.enc \
+#         | pg_restore --clean --if-exists --no-owner -d 'postgresql://...'
+#   - Fotos: descomprime solaria-storage-AAAA-MM-DD.tar.gz y arrastra la
+#     carpeta product-images al bucket "product-images" en el dashboard
+#     de Supabase → Storage (el dashboard recrea las carpetas al soltarla).
+#
 # Requiere dos secrets (Settings → Secrets and variables → Actions):
 #   BACKUP_DB_URL       URL de conexión de Supabase. En el dashboard →
 #                       Connect → «Direct connection» (puerto 5432).
@@ -86,3 +100,64 @@ jobs:
           path: solaria-*.dump.enc
           retention-days: 30
           if-no-files-found: error
+
+      # Fotos del catálogo. El volcado de arriba ya incluye las FILAS de
+      # storage.objects (qué fotos existen y cómo se llaman); aquí se
+      # descarga el binario de cada una por la URL pública del bucket.
+      # Así no hace falta ningún secret nuevo.
+      - name: Fotos del catálogo (bucket product-images)
+        env:
+          PG_URL: ${{ secrets.BACKUP_DB_URL }}
+        run: |
+          set -euo pipefail
+
+          # Ref del proyecto a partir de la URL de conexión
+          # (db.adeytt…supabase.co o …-pooler.supabase.co → adeytt…).
+          HOST=$(printf '%s' "$PG_URL" | sed -E 's#^[^@]*@##; s#[/:].*$##')
+          case "$HOST" in
+            db.*.supabase.co)     REF=${HOST#db.}; REF=${REF%%.supabase.co} ;;
+            *-pooler.supabase.co) REF=${HOST%%-pooler*} ;;
+            *)                    REF=$HOST ;;
+          esac
+          echo "Proyecto: $REF"
+
+          psql "$PG_URL" -At -c \
+            "select name from storage.objects where bucket_id = 'product-images' order by name" \
+            > /tmp/fotos.txt
+          TOTAL=$(grep -c . /tmp/fotos.txt || true)
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "El bucket no tiene fotos; no se crea artifact de storage."
+            exit 0
+          fi
+          echo "$TOTAL fotos en el bucket"
+
+          mkdir -p product-images
+          OK=0
+          FALLO=0
+          while IFS= read -r NAME; do
+            [ -n "$NAME" ] || continue
+            ENC=$(jq -nr --arg v "$NAME" '$v|@uri')
+            DEST="product-images/$NAME"
+            mkdir -p "$(dirname "$DEST")"
+            if curl -fsSL --retry 3 --retry-delay 10 \
+              "https://$REF.supabase.co/storage/v1/object/public/product-images/$ENC" \
+              -o "$DEST"; then
+              OK=$((OK + 1))
+            else
+              echo "No se pudo descargar: $NAME"
+              FALLO=$((FALLO + 1))
+            fi
+          done < /tmp/fotos.txt
+
+          echo "Descargadas: $OK · Fallidas: $FALLO de $TOTAL"
+          tar -czf "solaria-storage-$(date -u +%F).tar.gz" product-images
+          # Las fallidas no rompen el paso: la copia de la base (lo
+          # realmente delicado) ya está guardada; se avisa en el log.
+
+      - name: Guardar las fotos (artifact, 30 días)
+        uses: actions/upload-artifact@v4
+        with:
+          name: solaria-storage
+          path: solaria-storage-*.tar.gz
+          retention-days: 30
+          if-no-files-found: warn
