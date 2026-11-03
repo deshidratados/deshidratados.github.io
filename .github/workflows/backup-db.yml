@@ -111,14 +111,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Ref del proyecto a partir de la URL de conexión
-          # (db.adeytt…supabase.co o …-pooler.supabase.co → adeytt…).
-          HOST=$(printf '%s' "$PG_URL" | sed -E 's#^[^@]*@##; s#[/:].*$##')
-          case "$HOST" in
-            db.*.supabase.co)     REF=${HOST#db.}; REF=${REF%%.supabase.co} ;;
-            *-pooler.supabase.co) REF=${HOST%%-pooler*} ;;
-            *)                    REF=$HOST ;;
-          esac
+          # Ref del proyecto de Supabase: es fijo (no cambia nunca) y hace
+          # falta para montar la URL pública del bucket. No se puede sacar
+          # de forma fiable de la URL de conexión: con el connection pooler
+          # el host es "aws-0-us-east-1.pooler.supabase.com" y no contiene
+          # el ref.
+          REF="adeyttqsvcnptcvelbdz"
           echo "Proyecto: $REF"
 
           psql "$PG_URL" -At -c \
