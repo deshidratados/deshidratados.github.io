@@ -1,301 +1,463 @@
 # Guía práctica de soporte técnico · Solaria · Deshidratados
 
-> Manual pensado para uso directo en soporte/diagnóstico. Incluye arquitectura, integraciones, secretos, despliegue, copias de seguridad, restauración y troubleshooting.
+> Manual extenso, pensado para aprender la lógica del proyecto y actuar rápido en soporte. Explica **qué hace, por qué lo hace y cómo arreglarlo**.
 
-## 1. Visión general
+## Índice
 
-| Campo | Valor |
-|---|---|
-| **Nombre** | Solaria · Deshidratados |
-| **Tipo** | Tienda online (catálogo + carrito + pedido por WhatsApp) |
-| **Stack** | React 18 (Create React App) + React Router DOM 7 + Supabase (Postgres + Auth + Storage + Edge Functions) |
-| **Despliegue** | GitHub Pages (`https://deshidratados.github.io/`) |
-| **Dominio actual** | `https://deshidratados.github.io/` (tras migración a org `deshidratados`) |
-| **Panel admin** | `/#/admin` |
-| **Pasarela de pago** | **No existe**. El pedido se cierra por WhatsApp |
+- [1. Visión general del proyecto](#1-visión-general-del-proyecto)
+- [2. Stack y servicios utilizados](#2-stack-y-servicios-utilizados)
+- [3. Arquitectura general](#3-arquitectura-general)
+- [4. Estructura del código](#4-estructura-del-código)
+- [5. Frontend: Lógica y flujos](#5-frontend-lógica-y-flujos)
+- [6. Supabase: Base de datos, Auth, Storage y RLS](#6-supabase-base-de-datos-auth-storage-y-rls)
+- [7. Panel de administración](#7-panel-de-administración)
+- [8. Carrito, pedidos y WhatsApp](#8-carrito-pedidos-y-whatsapp)
+- [9. Boletines, correos y Edge Functions](#9-boletines-correos-y-edge-functions)
+- [10. Despliegue en GitHub Pages](#10-despliegue-en-github-pages)
+- [11. Copias de seguridad (Base de datos + Fotos)](#11-copias-de-seguridad-base-de-datos--fotos)
+- [12. Restauración (Supabase y Local)](#12-restauración-supabase-y-local)
+- [13. Variables, secretos y claves](#13-variables-secretos-y-claves)
+- [14. Troubleshooting detallado](#14-troubleshooting-detallado)
+- [15. Checklist de soporte](#15-checklist-de-soporte)
+- [16. Glosario y referencias](#16-glosario-y-referencias)
 
-**Modelo de negocio (importante):** El pedido siempre se entrega en Cuba. El comprador puede estar en cualquier parte del mundo. Los métodos de pago se gestionan fuera de la web (Transfermóvil, BPA/BANMET, MLC, efectivo, remesa, USDT/TRON).
+## 1. Visión general del proyecto
 
-## 2. Integraciones y servicios usados
+**Solaria** es una tienda online de frutas, verduras e hierbas deshidratadas. 
 
-| Servicio | Uso | Dónde se configura | Notas |
-|---|---|---|---|
-| **[Supabase](https://supabase.com/)** | Base de datos (Postgres), Auth, Storage, Edge Functions | Dashboard Supabase + `.env.local` + GitHub Secrets | Núcleo del proyecto. RLS activo. Bucket `product-images`. |
-| **[Brevo](https://www.brevo.com/)** | Envío de correos transaccionales (boletín + bienvenida) | Brevo → SMTP/API + Supabase Edge Functions Secrets | Plan gratuito ~300 correos/día. Verificar remitente. Ver `supabase/NEWSLETTER_SETUP.md`. |
-| **[GitHub Pages](https://pages.github.com/)** | Hosting estático de la web | GitHub → Settings → Pages + Actions | Despliegue automático con `.github/workflows/deploy.yml`. |
-| **[GitHub Actions](https://github.com/features/actions)** | CI/CD (deploy) + Copias de seguridad (cron/manual) | `.github/workflows/` | Workflow `deploy.yml` (push a `main`) y `backup-db.yml` (semanal + manual). |
+**Características clave:**
+- **Sin pasarela de pago**: Todo se gestiona por WhatsApp
+- **Entrega en Cuba**: El destino SIEMPRE es Cuba, aunque el comprador esté en otro país
+- **Multi-moneda**: CUP, USD, EUR con tipos de cambio manuales
+- **Panel propio**: Sin WordPress, todo custom
+- **Boletines con baja segura**: Sistema completo con Brevo
+- **100% editable**: Precios, productos, legales, configuración desde el panel
 
-## 3. Estructura del proyecto
+## 2. Stack y servicios utilizados
 
-| Ruta | Descripción |
-|---|---|
-| `public/` | Archivos estáticos: `index.html`, `sitemap.xml`, `robots.txt`, `unsubscribe.html`, `og.jpg`, etc. |
-| `src/` | Código React. |
-| `src/App.js` | Rutas, providers (`ShopProvider`, `CartProvider`, `CurrencyProvider`), `BootGate`. |
-| `src/data/supabase.js` | Cliente Supabase, `configured`, `publicImageUrl()`, `SETTINGS_KEYS`, `moneySettings()`. Bucket: `product-images`. |
-| `src/data/shop.js` | `ShopProvider`, carga desde Supabase o seed, `submitOrder()`, precarga de imágenes principales, `BOOT_TIMEOUT_MS=4000`. |
-| `src/data/products.js` | Datos de demostración (fallback si no hay Supabase). |
-| `src/data/currency.js` | Multi-moneda (CUP/USD/EUR). Conversión con tipos manuales. |
-| `src/data/config.js` | Config por defecto (nombre, WhatsApp, envío gratis, etc.). |
-| `src/context/CartContext.js` | Lógica del carrito. |
-| `src/components/` | Header, Hero, Catalog, CartDrawer, Footer, Sections, BootLoader, LegalPage, etc. |
-| `src/admin/` | Panel de administración completo (`AdminApp`, productos, pedidos, boletines, configuración...). |
-| `supabase/schema.sql` | Esquema completo para **base nueva**. |
-| `supabase/upgrade-2026-10-24.sql` | Upgrade idempotente para **base existente**. |
-| `supabase/upgrade-2026-10-29.sql` | Ajustes para boletines/Brevo. |
-| `supabase/functions/send-email/` | Edge Function para envío (boletines + bienvenida). |
-| `supabase/functions/unsubscribe/` | Edge Function para baja con firma HMAC (redirige a `public/unsubscribe.html`). |
-| `supabase/NEWSLETTER_SETUP.md` | Guía detallada de Brevo + Edge Functions. |
-| `.github/workflows/deploy.yml` | Build con secrets e inyección a GitHub Pages. |
-| `.github/workflows/backup-db.yml` | Copia semanal + manual con cifrado + backup de fotos. |
+| Tecnología/Servicio | Propósito | Razón |
+|---|---|---|
+| **React 18 + CRA** | Frontend | Sencillo, estable, fácil de mantener |
+| **React Router DOM 7** | Ruteo | SPA con hash routing para GitHub Pages |
+| **Supabase** | Backend as a Service | Postgres, Auth, Storage, Edge Functions todo en uno |
+| **Brevo** | SMTP/API de emails | Plan gratuito, verifica 1 email sin dominio obligatorio |
+| **GitHub Pages** | Hosting estático | Gratis, integración directa con Actions |
+| **GitHub Actions** | CI/CD + Backups | Automatización completa |
 
-## 4. Frontend, rutas y providers
+## 3. Arquitectura general
 
-### Ruteo (`src/App.js`)
-- `HashRouter` (típico GitHub Pages)
-- `/admin/*` → `AdminApp`
-- `*` (resto) → `Store`
-- Dentro de `Store`: ruta comodín `*` para portada + `doc/:slug` para páginas legales
-- `ScrollManager` controla scroll al cambiar de ruta/anchor
+```text
+Usuario (navegador)
+    ↓
+GitHub Pages (deshidratados.github.io)
+    ↓
+React App (SPA)
+    ├── Lee datos de Supabase (Postgres + Storage)
+    ├── Auth para panel /admin
+    ├── Llama Edge Functions para emails
+    └── Genera link WhatsApp para pedido
 
-### Providers
-1. `ShopProvider` (`src/data/shop.js`): Carga productos/categorías/config desde Supabase. Si falla o no está configurado, usa seeds. Precarga imágenes principales. Revela con tope 4s.
-2. `CurrencyProvider` (`src/data/currency.js`): Multi-moneda.
-3. `CartProvider` (`src/context/CartContext.js`): Carrito persistente.
-4. `BootGate`: Muestra `BootLoader` hasta `ready`.
+Supabase
+    ├── Postgres (tablas + RLS)
+    ├── Auth (usuarios admin)
+    ├── Storage bucket product-images
+    └── Edge Functions (send-email, unsubscribe)
+        └── Llama a Brevo API
+```
 
-### Configuración cliente
-- `.env.local` (local): `REACT_APP_SUPABASE_URL`, `REACT_APP_SUPABASE_ANON_KEY`
-- GitHub Actions Secrets (producción): mismos valores inyectados en build
-- `src/data/supabase.js`: `configured = Boolean(url && anonKey)`
+**Principios importantes:**
+- **Frontend lee con anon key**: Protegido por RLS
+- **Operaciones sensibles**: Van por Edge Functions con service key
+- **Claves nunca en cliente**: BREVO_API_KEY solo en Supabase Secrets
+- **Fallback a datos demo**: Si Supabase no configurado, usa `src/data/products.js`
 
-## 5. Supabase: Base de datos, RLS, Storage
+## 4. Estructura del código
 
-### Tablas principales (según esquema)
-- `categories`, `products`, `presentations`, `variants`
-- `orders`
-- `reviews`
-- `subscribers`, `newsletter_history`
-- `settings`
+| Archivo/Carpeta | Lógica | Cuándo revisar |
+|---|---|---|
+| `src/App.js` | Punto entrada. Providers, rutas, BootGate | Problemas de navegación/carga |
+| `src/data/supabase.js` | Cliente, helpers imágenes, SETTINGS_KEYS | Conexión Supabase, URLs imágenes |
+| `src/data/shop.js` | Carga catálogo, precarga imágenes, `submitOrder()` | Catálogo vacío, pedidos no se guardan |
+| `src/data/currency.js` | Conversión multi-moneda | Precios mal convertidos |
+| `src/context/CartContext.js` | Estado carrito | Errores carrito/checkout |
+| `src/admin/` | Todo el panel | Problemas panel/admin |
+| `src/components/` | UI tienda pública | Problemas visuales/UX |
+| `supabase/schema.sql` | Esquema completo | Crear BD nueva |
+| `supabase/functions/send-email/` | Lógica correos | Errores envío boletines/bienvenida |
+| `supabase/functions/unsubscribe/` | Baja con HMAC | Errores enlace baja |
+| `.github/workflows/backup-db.yml` | Copias automáticas | Fallos backup |
 
-### Seguridad
-- **RLS activado** en tablas sensibles
-- **Políticas** definidas en `schema.sql`
-- **Auth**: Usuario administrador creado manualmente en `Authentication > Users`
-- **Clave pública**: `anon` key usada en frontend (protegida con RLS)
+## 5. Frontend: Lógica y flujos
 
-### Storage
-- **Bucket**: `product-images` (público para lectura)
-- **Uso**: Imágenes de productos/variantes/galería
-- **Helper**: `publicImageUrl()` construye URL pública
-- **Subida/Borrado**: Desde panel de administración
+### 5.1 Arranque y BootGate
+En `src/App.js` y `src/data/shop.js`:
+1. `ShopProvider` arranca `loading: true`
+2. Si hay Supabase configurado → llama `loadFromSupabase()`
+3. Precarga **solo imágenes principales** con `Image()` 
+4. `ready` se activa cuando **todas las imágenes principales cargan** O cuando pasan **4 segundos** (`BOOT_TIMEOUT_MS`)
+5. `BootGate` muestra `BootLoader` hasta `ready`
 
-### Pedidos
-- `orders` guarda: `customer_name`, `phone`, `items` (JSON), `total`, `status`
-- `submitOrder()` inserta pedido si Supabase configurado
-- El aviso va por **WhatsApp** (no email)
+**Razón:** Evita parpadeos/placeholder y UX mejor en conexiones lentas.
 
-## 6. Panel de administración (`/#/admin`)
+### 5.2 Carga de datos
+`loadFromSupabase()` hace 5 consultas en paralelo:
+```js
+Promise.all([
+  supabase.from('categories').select('*').order('sort_order'),
+  supabase.from('products').select('*').eq('active', true).order('sort_order'),
+  supabase.from('variants').select('*').order('weight'),
+  supabase.from('settings').select('key, value').in('key', SETTINGS_KEYS),
+  supabase.from('presentations').select('*')
+])
+```
 
-Vistas típicas:
-- **Dashboard**: Resumen
-- **Productos**: CRUD, galería, variantes, presentaciones
-- **Categorías / Presentaciones**
-- **Pedidos**: Filtros por fecha/estado, agrupados por fecha de cambio de estado, aviso WhatsApp
-- **Reseñas**: Aprobar/rechazar, mostrar 3 en portada + "Ver más"
-- **Suscriptores**: Lista
-- **Boletines**: Editor texto plano, vista previa, borradores, historial plegable, envío con confirmación
-- **Configuración**: Datos tienda, moneda/tipos cambio, envío gratis, promoción hero, remitente boletín, documentos legales
-- **Documentos legales**: Editables con markdown-like (`#`, `##`, `**`, listas, enlaces)
+Transforma con `mapProduct()`, fusiona con `SHOP` defaults desde `moneySettings()`. Si falla o no hay productos → vuelve a seeds.
 
-## 7. Boletines, correos y Edge Functions
+### 5.3 Multi-moneda
+`src/data/currency.js`:
+- Detecta moneda por idioma navegador
+- Usa `rateCUP`, `rateEUR` desde settings (manuales)
+- Base configurable (`currencyBase`)
+- Formatea según moneda
+
+**Importante:** Los tipos **NO son automáticos**. Se actualizan manualmente desde panel → Configuración.
+
+### 5.4 Imágenes
+`publicImageUrl(path)`:
+- Si empieza con `http://` o `https://` → devuelve tal cual
+- Si configurado → construye `https://<url>/storage/v1/object/public/product-images/<path>`
+- Si no configurado → devuelve path tal cual
+
+Las imágenes van en bucket `product-images`. Estructura flexible por carpetas (ej. `products/mango/123.jpg`)
+
+## 6. Supabase: Base de datos, Auth, Storage y RLS
+
+### 6.1 Tablas clave
+| Tabla | Propósito | Notas |
+|---|---|---|
+| `products` | Productos | `active`, `slug`, `category_id`, `image`, `images[]` |
+| `variants` | Presentaciones/precios | Relacionado con producto y presentación |
+| `presentations` | Unidades (gr, kg...) | Se muestra "Presentación · Label" |
+| `categories` | Categorías | Con `sort_order` |
+| `orders` | Pedidos | Se guarda antes de abrir WhatsApp |
+| `reviews` | Reseñas | Públicas tras aprobar? Se muestran últimas 3 |
+| `subscribers` | Suscriptores boletín | Para bienvenida y envíos |
+| `newsletter_history` | Historial envíos | Asunto, HTML, count, fecha |
+| `settings` | Configuración | Clave/valor. Editables desde panel |
+
+### 6.2 RLS (Row Level Security)
+Activado en casi todas. **Lógica general:**
+- **Lectura pública**: Productos activos, categorías, presentaciones, variantes, configuraciones públicas, reseñas aprobadas (según lógica)
+- **Escritura restringida**: Pedidos pueden insertarse desde frontend (para guardar), resto requiere autenticado/admin
+- **Panel requiere auth**: Solo usuarios autenticados acceden a `/admin`
+
+**Regla crítica:** `Authentication > Sign In / Providers > Allow new signups` **DEBE ESTAR DESACTIVADO**
+
+### 6.3 Storage
+Bucket `product-images` público para lectura. Panel permite subir/borrar desde admin. Las rutas se guardan en DB (pueden ser relativas al bucket).
+
+### 6.4 Auth
+Usuario administrador creado en `Authentication > Users > Add user` con email + contraseña. Ese usuario es el único que puede acceder al panel y enviar boletines.
+
+## 7. Panel de administración
+
+Ruta: `/#/admin`. Requiere login.
+
+| Sección | Función | Detalles |
+|---|---|---|
+| **Inicio/Dashboard** | Resumen | Vistazo general |
+| **Productos** | CRUD completo | Galería, variantes, precios por presentación |
+| **Categorías** | Gestión | Orden, slug |
+| **Presentaciones** | Unidades | gr, kg, etc. |
+| **Pedidos** | Gestión pedidos | Estados, filtros por fecha, agrupados por fecha de cambio, botón WhatsApp |
+| **Reseñas** | Moderación | Aprobar/eliminar, se muestran 3 en home |
+| **Suscriptores** | Lista | Ver emails suscritos |
+| **Boletines** | Envío | Editor texto plano, vista previa, borrador, historial, confirmación envío |
+| **Configuración** | Ajustes globales | Moneda, tipos cambio, envío gratis, heroPromo, remitente correo, documentos legales |
+
+**Trucos panel:**
+- Documentos legales usan formato simple (`#`, `##`, `**`, listas, `[texto](url)`)
+- Boletines validan antes de enviar (avisa si falta `{{UNSUBSCRIBE_URL}}`)
+- Historial permite restaurar envíos anteriores
+
+## 8. Carrito, pedidos y WhatsApp
 
 ### Flujo
-1. Frontend llama a `POST https://<project>.supabase.co/functions/v1/send-email`
-2. `send-email` valida auth/sesión según tipo
-3. Lee `settings.newsletter_from` y `settings.email` desde DB
-4. Genera enlaces `{{UNSUBSCRIBE_URL}}` firmados con HMAC-SHA256 por destinatario
-5. Llama a **Brevo API** con `BREVO_API_KEY` (secret)
-6. Registra en `newsletter_history` (solo boletines)
-7. Baja vía `unsubscribe` (GET redirige a `public/unsubscribe.html`, POST borra con firma válida)
+1. Usuario añade productos al carrito
+2. Abre carrito/drawer
+3. Rellena datos: nombre + teléfono (selector país)
+4. Pulsa comprar → `submitOrder()` guarda en `orders` (si Supabase OK)
+5. Se abre WhatsApp con mensaje preformateado
+6. Mensaje incluye: productos, cantidades, totales, moneda, **"La entrega es siempre en Cuba"**
 
-### Seguridad clave
-- **`send-email`**: requiere sesión autenticada para boletines. Para `type: 'welcome'` usa plantilla fija del servidor, único destinatario y valida que esté en `subscribers`. **Remitente SIEMPRE desde DB**.
-- **`unsubscribe`**: **Verify JWT DESACTIVADO**. Protegido con **HMAC-SHA256 + comparación en tiempo constante**. GET solo redirige (evita borrado por precarga de escáneres). POST borra.
-- **Claves**: `BREVO_API_KEY` en Supabase Secrets. Servicio key soporta `SUPABASE_SECRET_KEYS` o `SUPABASE_SERVICE_ROLE_KEY`.
-- **Sin claves en frontend**.
+### Lógica en código
+- `src/data/shop.js` → `submitOrder({ customerName, phone, items, total, shopName })`
+- Inserta en tabla `orders` con `status: 'Nuevo'`
+- Si Supabase no configurado, `submitOrder` devuelve `{ ok: false }` pero **NO rompe el flujo** (sigue abriendo WhatsApp)
+- `src/context/CartContext.js` gestiona estado
+- Desde panel se cambia estado del pedido → puede enviar aviso WhatsApp
 
-### Configuración Brevo
-Ver `supabase/NEWSLETTER_SETUP.md` completo. Puntos críticos:
-- Verificar remitente en Brevo
-- Añadir `BREVO_API_KEY` a Edge Functions Secrets
-- Desplegar `send-email` (JWT on) y `unsubscribe` (JWT off)
-- Poner remitente verificado en `/admin` → Configuración
-- `unsubscribe.html` publicado por GitHub Pages
+## 9. Boletines, correos y Edge Functions
 
-## 8. Despliegue
+### 9.1 send-email
+**Archivo:** `supabase/functions/send-email/index.ts`
 
-### GitHub Pages
-Workflow `.github/workflows/deploy.yml`:
-- Trigger: `push` a `main`
-- Build con `npm ci`/`npm install`, `npm run build`
-- Env: `REACT_APP_SUPABASE_URL`, `REACT_APP_SUPABASE_ANON_KEY` desde GitHub Secrets
-- Deploy con `actions/deploy-pages@v4`
+**Tipos de envío:**
+- `type: 'welcome'` → Formulario público suscripción. **Sin sesión.** Servidor usa plantilla fija `WELCOME_HTML`, ignora asunto/html del cliente, valida 1 destinatario y que esté en `subscribers`.
+- Cualquier otro → **Requiere JWT autenticado** (solo admin con sesión)
 
-### Secrets necesarios (GitHub)
-| Secret | Uso |
-|---|---|
-| `REACT_APP_SUPABASE_URL` | URL proyecto Supabase |
-| `REACT_APP_SUPABASE_ANON_KEY` | Anon key Supabase |
+**Seguridad:**
+- Remitente SIEMPRE desde `settings.newsletter_from`
+- Límite `MAX_PER_CALL = 50` por invocación
+- Envía **uno a uno** (no pone todos en `To:`)
+- Sustituye `{{UNSUBSCRIBE_URL}}` por enlace firmado HMAC por destinatario
+- Guarda en `newsletter_history` solo si `type === 'newsletter'`
 
-### Secrets necesarios (Supabase Edge Functions)
-| Secret | Uso |
-|---|---|
-| `BREVO_API_KEY` | API key de Brevo |
-| (Servicio key) | Inyectada por plataforma o `SUPABASE_SERVICE_ROLE_KEY`/`SUPABASE_SECRET_KEYS` |
+**Proceso:**
+1. Valida body
+2. Comprueba auth si no es welcome
+3. Limpia/valida emails
+4. Lee settings (remitente)
+5. Trocea batch 50
+6. Por cada uno: genera `makeUnsubscribeUrl()` con HMAC, llama Brevo API
+7. Registra historial si es newsletter
+8. Devuelve resumen
 
-### Auth URLs (Supabase)
-Si hay redirects por auth/password reset, añadir `https://deshidratados.github.io/*` en Auth → URL Configuration.
+### 9.2 unsubscribe
+**Archivo:** `supabase/functions/unsubscribe/index.ts`
 
-## 9. Copias de seguridad (Base de datos + Fotos)
+**Ruta pública** (Verify JWT **OFF**)
 
-Workflow: `.github/workflows/backup-db.yml`
+**Flujo:**
+1. **GET** con `?e=email&s=firma` → Redirige 302 a `https://deshidratados.github.io/unsubscribe.html` pasando params
+2. Página `public/unsubscribe.html` muestra confirmación con botón
+3. **POST** con `e,s` → Valida firma con `hmacHex()` + `safeEqual()` (tiempo constante), borra de `subscribers` con `ilike` escapando comodines
+4. Responde `{ ok: true }` o error
+
+**Por qué GET no borra:** Gmail/Outlook precargan enlaces (escáneres). Si borrara al abrir, se darían de baja sin querer. POST solo lo hace al pulsar botón.
+
+**Firma:** `HMAC-SHA256(email.toLowerCase().trim(), SERVICE_KEY)` en hex
+
+### 9.3 Brevo
+API: `https://api.brevo.com/v3/smtp/email`
+Headers: `api-key: BREVO_API_KEY`, `Content-Type: application/json`
+Body: `{ sender, to: [{email}], subject, htmlContent, replyTo? }`
+
+**Errores comunes Brevo:** `not_acceptable` (remitente no verificado), `unauthorized`, `account_under_validation`, `not_enough_credits`
+
+Ver `supabase/NEWSLETTER_SETUP.md` para configuración paso a paso completa.
+
+## 10. Despliegue en GitHub Pages
+
+**Workflow:** `.github/workflows/deploy.yml`
+
+```yaml
+on:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - checkout
+      - setup-node 20
+      - npm ci || npm install
+      - npm run build (con secrets)
+      - upload-pages-artifact (build)
+  deploy:
+    needs: build
+    uses actions/deploy-pages
+```
+
+**Secrets GitHub Actions:**
+- `REACT_APP_SUPABASE_URL`
+- `REACT_APP_SUPABASE_ANON_KEY`
+
+**Pasos:**
+1. Añadir secrets en repo
+2. Push a `main` dispara deploy
+3. Site: `https://deshidratados.github.io/`
+
+## 11. Copias de seguridad (Base de datos + Fotos)
+
+**Workflow:** `.github/workflows/backup-db.yml`
 
 ### Frecuencia
-- **Cron**: Lunes 04:00 UTC
-- **Manual**: `Actions > Copia de seguridad de la base de datos > Run workflow`
+- **Programado:** `cron: '0 4 * * 1'` (Lunes 04:00 UTC)
+- **Manual:** `workflow_dispatch`
 
-Si repo inactivo 60 días, GitHub desactiva cron (se reactiva con Run workflow).
-
-### Secrets
+### Secrets requeridos
 | Secret | Uso |
 |---|---|
-| `BACKUP_DB_URL` | Conexión **directa** Supabase (puerto 5432) |
-| `BACKUP_PASSPHRASE` | Frase para cifrado AES-256. **Guardar fuera de GitHub** |
+| `BACKUP_DB_URL` | Conexión **directa** puerto 5432 |
+| `BACKUP_PASSPHRASE` | Clave AES-256 para cifrado. **CRÍTICO: guardarla fuera** |
 
-### Proceso
-1. Instalar `postgresql-client` (PGDG)
-2. `pg_dump --no-owner --no-privileges --format=custom` → pipe a `openssl enc -aes-256-cbc -pbkdf2 -salt` → `solaria-YYYY-MM-DD.dump.enc`. **Reintentos** si DB dormida.
-3. Subir artifact `solaria-backup` (30 días)
-4. Listar `storage.objects` donde `bucket_id='product-images'` vía `psql`
-5. Descargar cada archivo por URL pública con **project-ref fijo** `adeyttqsvcnptcvelbdz`: `https://adeyttqsvcnptcvelbdz.supabase.co/storage/v1/object/public/product-images/<ruta-url-encodeada>`
-6. Comprimir `product-images/` → `solaria-storage-YYYY-MM-DD.tar.gz` y subir como artifact `solaria-storage` (30 días, `if-no-files-found: warn`)
+### Flujo detallado
+1. **Instalar cliente Postgres** desde PGDG
+2. **Dump cifrado**:
+   - `pg_dump --no-owner --no-privileges --format=custom "$PG_URL"`
+   - Pipe a `openssl enc -aes-256-cbc -pbkdf2 -salt -pass pass:"$BACKUP_PASSPHRASE"`
+   - Guarda `solaria-YYYY-MM-DD.dump.enc`
+   - Reintentos 3x con 60s si DB dormida
+3. **Subir DB artifact**: `solaria-backup` (retention 30 días)
+4. **Backup fotos**:
+   - Query `storage.objects` WHERE `bucket_id='product-images'` con `psql`
+   - Usa **project-ref fijo** `adeyttqsvcnptcvelbdz` (por compatibilidad con pooler)
+   - Descarga con `curl` desde `https://<REF>.supabase.co/storage/v1/object/public/product-images/<url-encode>`
+   - Respeta estructura carpetas
+   - Genera `solaria-storage-YYYY-MM-DD.tar.gz`
+   - Sube artifact `solaria-storage` (30 días, warn si vacío)
+5. **Finaliza**
 
-**Notas importantes:**
-- `pg_dump` **incluye metadatos** de storage pero **NO binarios** → fotos aparte
-- Bucket público → no requiere `SERVICE_ROLE_KEY`
-- Artifacts **se acumulan** por ejecución, se borran a los 30 días
-- Funciona con **pooler o directo** gracias al ref fijo
+### Dónde ver
+**SIEMPRE** en `Actions > Copia de seguridad de la base de datos > [run] > Summary` → Artifacts al final. **NO** en pestaña Jobs.
 
-### Dónde ver artifacts
-`Actions > Copia de seguridad de la base de datos > [run verde] > Summary > Artifacts` (abajo). NO en la pestaña Jobs.
+### Acumulación
+- Se **acumulan** por ejecución (GitHub v4 crea nuevo artifact por run)
+- **Expiran a 30 días** automáticamente
+- Recomendado descargar copias importantes manualmente
 
-## 10. Restauración
+## 12. Restauración (Supabase y Local)
 
-### En Supabase (producción/otro proyecto)
-Necesitarás ambos artifacts del mismo día.
+### A) Restaurar en Supabase / PostgreSQL remoto
+Descarga ambos artifacts del **mismo día**.
 
-**A) Base de datos**
+**Base de datos:**
 ```bash
 openssl enc -d -aes-256-cbc -pbkdf2 -salt \
-  -pass pass:'TU_FRASE_BACKUP_PASSPHRASE' \
-  -in solaria-YYYY-MM-DD.dump.enc \
+  -pass pass:'TU_PASSPHRASE' \
+  -in solaria-2026-11-XX.dump.enc \
   | pg_restore \
       --clean \
       --if-exists \
       --no-owner \
       --no-privileges \
-      -d "postgresql://postgres:TU_PASSWORD@db.TU_REF.supabase.co:5432/postgres"
+      -d "postgresql://postgres:PASSWORD@db.REF.supabase.co:5432/postgres"
 ```
 
-**B) Fotos**
+**Fotos:**
 ```bash
-tar -xzf solaria-storage-YYYY-MM-DD.tar.gz
+tar -xzf solaria-storage-2026-11-XX.tar.gz
+# Arrastrar carpeta product-images/ a Storage > product-images en Supabase
 ```
-Arrastrar carpeta `product-images/` entera a **Supabase Dashboard > Storage > bucket `product-images`**.
 
-### En local (Postgres local/Docker)
+### B) Restaurar localmente
 ```bash
-# Crear DB
-psql -U postgres -h localhost -c "CREATE DATABASE solaria_local;"
+# Crear BD
+createdb solaria_local  # o psql CREATE DATABASE
 
-# Desencriptar
+# Desencriptar a .dump
 openssl enc -d -aes-256-cbc -pbkdf2 -salt \
-  -pass pass:'TU_FRASE_BACKUP_PASSPHRASE' \
-  -in solaria-YYYY-MM-DD.dump.enc \
-  -out solaria-YYYY-MM-DD.dump
+  -pass pass:'TU_PASSPHRASE' \
+  -in solaria-2026-11-XX.dump.enc \
+  -out solaria-2026-11-XX.dump
 
-# Restaurar con pg_restore
+# Restaurar con pg_restore (OBLIGATORIO, NO psql)
 pg_restore \
   --clean \
   --if-exists \
   --no-owner \
   --no-privileges \
-  --dbname=postgresql://postgres:TU_PASSWORD@localhost:5432/solaria_local \
-  solaria-YYYY-MM-DD.dump
+  --dbname=postgresql://usuario:pass@localhost:5432/solaria_local \
+  solaria-2026-11-XX.dump
 
 # Fotos
-tar -xzf solaria-storage-YYYY-MM-DD.tar.gz
-# Copiar product-images/ a la ruta que use tu app local
+tar -xzf solaria-storage-2026-11-XX.tar.gz
+# Copiar product-images/ a ruta que sirva tu app local
 ```
 
-**Advertencias restauración local:**
-- Usar **`pg_restore`**, NO `psql` con `.dump`
-- `pg_restore` >= versión servidor idealmente
-- `--no-owner --no-privileges` para evitar roles distintos
-- Esquema `auth` puede venir, RLS puede dar problemas sin JWT/roles
-- Edge Functions **NO** se restauran
+**Trucos restauración:**
+- Usar **conexión directa** para restore (evita pooler)
+- `pg_restore` >= versión Postgres servidor
+- Tras restaurar, revisar RLS/Auth si pruebas app completa
+- Edge Functions NO se restauran
 
-## 11. Troubleshooting rápido
+## 13. Variables, secretos y claves
 
-| Síntoma | Causa probable | Solución |
-|---|---|---|
-| Web en blanco / carga infinita | Supabase sin configurar o error carga | Revisar `.env.local` / GitHub Secrets. Ver consola. Usa datos seed si falla. |
-| Panel no deja entrar | Sin usuario admin / RLS | Crear usuario en `Authentication > Users`. Comprobar sesión. |
-| Imágenes no cargan | Ruta incorrecta / bucket | Comprobar `IMAGES_BUCKET`, `publicImageUrl()`, bucket público `product-images`. |
-| Pedido no se guarda | Sin Supabase / RLS | Comprobar `submitOrder()`. Aunque falle, sigue flujo WhatsApp. |
-| Boletín no envía | Sin sesión / secret Brevo / remitente no verificado | Ver logs Edge Function, Brevo Dashboard, config remitente, JWT de `send-email`. |
-| Bienvenida no llega | No está en `subscribers` / plantilla servidor | Debe suscribirse primero. Servidor valida que exista en `subscribers`. |
-| Baja no funciona / 401 | `unsubscribe` con Verify JWT ON | Desactivar **Verify JWT** en función `unsubscribe`. |
-| Enlace baja abre texto crudo | Función antigua sirviendo HTML | Redesplegar `unsubscribe` con código actual. |
-| Backup falla descargando fotos (pooler) | Mal parseo ref | Ya corregido con **ref fijo** `adeyttqsvcnptcvelbdz`. |
-| No veo artifacts | Mirando Jobs en lugar de Summary | Ir a **Summary** y bajar al final. |
-| Correos a Spam | Sin dominio propio / Gmail | Añadir contacto, marcar "No es spam". Considerar dominio + SPF/DKIM/DMARC. |
-
-## 12. Checklist de soporte express
-
-- [ ] **Web**: Carga OK en `https://deshidratados.github.io/`
-- [ ] **Admin**: Login OK `/#/admin`
-- [ ] **Carrito/WhatsApp**: Prueba pedido
-- [ ] **Boletines**: Suscripción + envío prueba
-- [ ] **Baja**: Probar enlace
-- [ ] **Backup**: Último run verde con `solaria-backup` + `solaria-storage`
-- [ ] **Secrets**: GitHub + Supabase Edge Functions correctos
-- [ ] **Auth URLs**: Añadido si hay auth
-- [ ] **Edge Functions**: `send-email` JWT on, `unsubscribe` JWT off
-
-## 13. Comandos útiles
-
-```bash
-# Dev
-npm install && npm start
-
-# Build
-npm run build
-
-# Git
-git status -sb
-git add -A && git commit -m "mensaje" && git push origin main
-
-# Backup local restore
-openssl enc -d -aes-256-cbc -pbkdf2 -salt -pass pass:'FRASE' -in solaria-YYYY-MM-DD.dump.enc -out solaria-YYYY-MM-DD.dump
-pg_restore --clean --if-exists --no-owner --no-privileges --dbname=postgresql://user:pass@localhost:5432/solaria_local solaria-YYYY-MM-DD.dump
-tar -xzf solaria-storage-YYYY-MM-DD.tar.gz
+### Frontend (.env.local + GitHub)
+```env
+REACT_APP_SUPABASE_URL=https://xxxx.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=eyJ...  # o sb_publishable_...
 ```
+**Públicas por diseño.** Protegidas por RLS.
 
-## Apéndice: Archivos clave para consulta rápida
-- `src/data/supabase.js` / `src/data/shop.js` / `src/App.js`
-- `supabase/schema.sql`, `supabase/NEWSLETTER_SETUP.md`, `supabase/functions/*`
-- `.github/workflows/deploy.yml`, `.github/workflows/backup-db.yml`
-- `README.md`
-- `docs/GUIA_SOPORTE_TECNICO_SOLARIA.md` (este documento)
+### GitHub Actions Secrets
+- `REACT_APP_SUPABASE_URL`
+- `REACT_APP_SUPABASE_ANON_KEY`
+- `BACKUP_DB_URL`
+- `BACKUP_PASSPHRASE`
+
+### Supabase Edge Functions Secrets
+- `BREVO_API_KEY`
+- `SUPABASE_URL` / claves servicio inyectadas automáticamente
+
+### Regla oro
+**NUNCA** subir `.env.local`, **NUNCA** poner `BREVO_API_KEY` en frontend, **GUARDAR** `BACKUP_PASSPHRASE` fuera de Git.
+
+## 14. Troubleshooting detallado
+
+| Problema | Síntoma | Diagnóstico | Solución |
+|---|---|---|---|
+| **Web no carga** | Pantalla blanca | Consola navegador, Network | Comprobar env/secrets, ver si usa seeds, revisar Build Actions |
+| **Panel login falla** | "Invalid login" | Auth Users existe? | Crear usuario en Authentication > Users. Verificar contraseña |
+| **Imágenes rotas** | Sin imágenes | Bucket público? URL correcta? | Comprobar bucket `product-images` público, rutas en DB, `publicImageUrl()` |
+| **Pedidos no guardan** | No aparece en panel | RLS / `submitOrder()` | Ver RLS `orders`. Aunque falle, WhatsApp sí funciona |
+| **Boletín falla auth** | "Sesión no válida" | JWT/session | Salir/entrar panel. Verificar sesión admin |
+| **Bienvenida no llega** | No se envía | Email no suscrito? | Suscribirse desde pie primero. Revisar `subscribers` |
+| **Baja da 401** | Enlace falla | `unsubscribe` con JWT ON | **Desactivar Verify JWT** en función unsubscribe |
+| **Baja da 404** | Página no existe | No pusheado/unsub publish | Esperar deploy GitHub Pages o pushear `public/unsubscribe.html` |
+| **Brevo not_acceptable** | Remitente rechazado | No verificado | Verificar remitente en Brevo Senders, usar exacto en panel |
+| **Brevo unauthorized** | API key mala | Secret incorrecto | Regenerar key Brevo, actualizar `BREVO_API_KEY` |
+| **Backup fotos falla DNS** | `Could not resolve host ...supabase.co.supabase.co` | Pooler mal parseado | Ya corregido con ref fijo. Si persiste, revisar workflow |
+| **No veo artifacts** | No aparecen | En pestaña Jobs | Ir a **Summary** → bajar hasta final |
+| **Correos a Spam** | Llegan spam | Sin dominio propio | Añadir a contactos, marcar no spam, considerar dominio+SPF/DKIM |
+
+## 15. Checklist de soporte
+
+### Diario/Rápido
+- [ ] Web responde
+- [ ] Admin accesible
+- [ ] Carrito + WhatsApp funciona
+
+### Configuración
+- [ ] Secrets GitHub OK
+- [ ] Secrets Supabase OK
+- [ ] `allow new signups` DESACTIVADO
+- [ ] Remitente Brevo verificado
+- [ ] `send-email` JWT ON / `unsubscribe` JWT OFF
+
+### Correos
+- [ ] Suscripción → bienvenida llega
+- [ ] Boletín prueba llega
+- [ ] Baja por enlace funciona
+
+### Backups
+- [ ] Última ejecución backup VERDE
+- [ ] Existen `solaria-backup` + `solaria-storage`
+- [ ] Artifacts < 30 días
+
+### Producción
+- [ ] GitHub Pages verde
+- [ ] Auth URLs configuradas si aplica
+- [ ] Edge Functions desplegadas con código actual
+
+## 16. Glosario y referencias
+
+| Término | Explicación |
+|---|---|
+| **RLS** | Row Level Security - filtra filas por usuario/rol |
+| **Edge Function** | Función serverless en Supabase (Deno) |
+| **HMAC** | Hash Message Authentication Code - firma para validar enlaces |
+| **pg_dump/pg_restore** | Herramientas backup/restauración Postgres |
+| **Artifact** | Archivo guardado por GitHub Actions con retención |
+| **Pooler/Direct** | Formas conectar a Postgres. Direct mejor para dumps |
+| **JWT** | JSON Web Token para auth |
+| **Anon key** | Clave pública para cliente |
+
+### Referencias
+- [Supabase Docs](https://supabase.com/docs)
+- [Brevo Docs](https://developers.brevo.com/)
+- [GitHub Actions](https://docs.github.com/en/actions)
+- [React Router](https://reactrouter.com/)
+- `supabase/NEWSLETTER_SETUP.md` (guía Brevo detallada)
+- `README.md` (inicio rápido)
