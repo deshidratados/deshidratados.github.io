@@ -77,48 +77,129 @@ function buildWaUrl(shop, items, total, customer, buyer, fmt) {
   return `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
 
-export default function CheckoutForm({ items, total, onPlaced }) {
+const { createClient } = await import('@supabase/supabase-js');
+const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
+const SUPABASE_ANON = process.env.REACT_APP_SUPABASE_ANON_KEY;
+const supabaseClient = SUPABASE_URL && SUPABASE_ANON ? createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+
+export default function CheckoutForm({ items, total, onPlaced, onClose }) {
   const { shop } = useShop();
   const { fmt } = useCurrency();
   const [name, setName] = useState('');
   const [region, setRegion] = useState(detectRegion);
   const [phone, setPhone] = useState('');
-  const [state, setState] = useState('idle'); // idle | saving | done | error
+  const [paymentMethod, setPaymentMethod] = useState('whatsapp'); // 'whatsapp' | 'enzona'
+  const [state, setState] = useState('idle'); // idle | saving | done | error | redirecting
   const [note, setNote] = useState('');
+  const [enzonaEnabled] = useState(true); // Se puede controlar desde settings más adelante
 
   const digits = phone.replace(/\D/g, '');
   const buyer = COUNTRIES.find(c => c.region === region) || COUNTRIES[0];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (state === 'saving') return;
+    if (state === 'saving' || state === 'redirecting') return;
     if (digits.length < 7) {
       setState('error');
       setNote('Escribe un número de teléfono válido (al menos 7 dígitos).');
+      return;
+    }
+    if (paymentMethod === 'enzona' && !enzonaEnabled) {
+      setState('error');
+      setNote('El pago con Enzona no está disponible en este momento.');
       return;
     }
     setState('saving');
     setNote('');
 
     const customer = { name: name.trim(), phone: `+${buyer.dial}${digits}` };
-    const waUrl = buildWaUrl(shop, items, total, customer, buyer, fmt);
 
-    const res = await submitOrder({
-      customerName: customer.name || 'Cliente sin nombre',
-      phone: customer.phone,
-      items: items.map(i => ({ id: i.id, name: i.name, variant: i.variant, quantity: i.quantity })),
-      total
-    });
+    if (paymentMethod === 'whatsapp') {
+      const waUrl = buildWaUrl(shop, items, total, customer, buyer, fmt);
 
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
+      const res = await submitOrder({
+        customerName: customer.name || 'Cliente sin nombre',
+        phone: customer.phone,
+        items: items.map(i => ({ id: i.id, name: i.name, variant: i.variant, quantity: i.quantity })),
+        total,
+        paymentMethod: 'whatsapp',
+        paymentStatus: 'pendiente'
+      });
 
-    if (res.ok) {
-      setState('done');
-    } else {
-      setState('error');
-      setNote('No pudimos guardar tu pedido en línea, pero tu mensaje de WhatsApp ya está listo.');
+      window.open(waUrl, '_blank', 'noopener,noreferrer');
+
+      if (res.ok) {
+        setState('done');
+      } else {
+        setState('error');
+        setNote('No pudimos guardar tu pedido en línea, pero tu mensaje de WhatsApp ya está listo.');
+      }
+      onPlaced();
+      return;
     }
-    onPlaced();
+
+    // Flujo Enzona
+    if (paymentMethod === 'enzona') {
+      const res = await submitOrder({
+        customerName: customer.name || 'Cliente sin nombre',
+        phone: customer.phone,
+        items: items.map(i => ({ id: i.id, name: i.name, variant: i.variant, quantity: i.quantity })),
+        total,
+        paymentMethod: 'enzona',
+        paymentStatus: 'pendiente'
+      });
+
+      if (!res.ok || !res.data?.id) {
+        setState('error');
+        setNote('No pudimos crear el pedido para Enzona. Inténtalo de nuevo o elige pagar por WhatsApp.');
+        return;
+      }
+
+      try {
+        setState('redirecting');
+        const orderId = res.data.id;
+        const origin = window.location.origin;
+        const basePath = window.location.pathname.replace(/\/$/, '');
+        const returnUrl = `${origin}${basePath}/#/pago/exito?order=${orderId}`;
+        const cancelUrl = `${origin}${basePath}/#/pago/cancelado?order=${orderId}`;
+
+        const resp = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/create-enzona-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({
+            orderId,
+            amount: total,
+            customerName: customer.name || 'Cliente',
+            phone: customer.phone,
+            items: items.map(i => ({ name: i.name, variant: i.variant.label, quantity: i.quantity, price: i.variant.price })),
+            returnUrl,
+            cancelUrl
+          })
+        });
+
+        const data = await resp.json();
+        if (!resp.ok || !data.paymentUrl) {
+          throw new Error(data.error || 'No se pudo generar el enlace de pago');
+        }
+
+        // Guardar URL de pago
+        if (supabaseClient) {
+          await supabaseClient.from('orders').update({ payment_url: data.paymentUrl }).eq('id', orderId);
+        }
+
+        onPlaced();
+        window.location.href = data.paymentUrl;
+        return;
+      } catch (err) {
+        setState('error');
+        setNote(err.message || 'Error al conectar con Enzona. Prueba a pagar por WhatsApp.');
+        onPlaced();
+        return;
+      }
+    }
   };
 
   if (state === 'done') {
@@ -130,10 +211,19 @@ export default function CheckoutForm({ items, total, onPlaced }) {
     );
   }
 
+  if (state === 'redirecting') {
+    return (
+      <div className="co-done">
+        <p className="co-ok">Redirigiendo a Enzona...</p>
+        <p>Espera un momento, te estamos llevando a la pasarela de pago.</p>
+      </div>
+    );
+  }
+
   return (
     <form className="co-form" onSubmit={handleSubmit}>
       <p className="co-hint">
-        El pedido se entrega en <b>Cuba</b>. Deja tu contacto y lo confirmamos por WhatsApp.
+        El pedido se entrega en <b>Cuba</b>. Deja tu contacto y elige cómo quieres pagar.
       </p>
       <div className="co-row">
         <input
@@ -166,9 +256,36 @@ export default function CheckoutForm({ items, total, onPlaced }) {
           🌍 Comprando desde {buyer.name}. El envío se entrega en Cuba; lo coordinamos por WhatsApp.
         </p>
       )}
-      {state === 'error' && note && digits.length < 7 && <p className="co-warn">{note}</p>}
-      <button className="wa-btn" type="submit" disabled={state === 'saving'}>
-        {state === 'saving' ? 'Registrando…' : 'Registrar y pedir por WhatsApp →'}
+
+      <div style={{ marginTop: '12px', marginBottom: '10px' }}>
+        <p style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#2a1f14' }}>Método de pago</p>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', cursor: 'pointer' }}>
+          <input
+            type="radio"
+            name="paymentMethod"
+            value="whatsapp"
+            checked={paymentMethod === 'whatsapp'}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+          />
+          <span>💬 Pagar por WhatsApp (confirmar por mensaje)</span>
+        </label>
+        {enzonaEnabled && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="enzona"
+              checked={paymentMethod === 'enzona'}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            />
+            <span>💳 Pagar con Enzona</span>
+          </label>
+        )}
+      </div>
+
+      {state === 'error' && note && <p className="co-warn">{note}</p>}
+      <button className="wa-btn" type="submit" disabled={state === 'saving' || state === 'redirecting'}>
+        {state === 'saving' ? 'Procesando…' : state === 'redirecting' ? 'Redirigiendo…' : paymentMethod === 'enzona' ? 'Pagar con Enzona →' : 'Registrar y pedir por WhatsApp →'}
       </button>
     </form>
   );

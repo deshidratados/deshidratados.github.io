@@ -105,7 +105,7 @@ export default function CartDrawer({ isOpen, onClose }) {
             registrado el carrito queda vacío y el mensaje de éxito vive
             aquí, dentro del paso 2. */}
         <div className={'checkout-pane' + (step === 1 ? ' off' : '')}>
-          <CheckoutForm items={cart} total={total} onPlaced={clearCart} />
+          <CheckoutForm items={cart} total={total} onPlaced={clearCart} onClose={onClose} />
         </div>
       </aside>
     </>

@@ -94,7 +94,14 @@ create table if not exists public.orders (
   items         jsonb not null default '[]'::jsonb,
   total         numeric(10,2) not null default 0,
   status        text not null default 'Nuevo',
-  created_at    timestamptz not null default now()
+  status_updated_at timestamptz,
+  created_at    timestamptz not null default now(),
+  -- Pagos
+  payment_method text not null default 'whatsapp',
+  payment_status text not null default 'pendiente',
+  payment_ref    text,
+  payment_url    text,
+  paid_at        timestamptz
 );
 
 create table if not exists public.settings (

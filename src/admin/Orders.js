@@ -3,6 +3,19 @@ import { supabase, configured } from '../data/supabase';
 import { fmtDate, fmtTime, dayKey, dayPrefix, fmtDayLong, money, ORDER_STATUS, STATUS_CLASS, STATUS_HINTS, STATUS_NOTIFY } from './helpers';
 import Notice from './Notice';
 
+const PAY_STATUS = {
+  'pendiente': { label: 'Pendiente de pago', className: 'pay-pending' },
+  'pagado': { label: 'Pagado', className: 'pay-paid' },
+  'fallido': { label: 'Pago fallido', className: 'pay-failed' },
+  'cancelado': { label: 'Cancelado', className: 'pay-cancelled' },
+  'expirado': { label: 'Expirado', className: 'pay-expired' }
+};
+
+const PAY_METHOD = {
+  'whatsapp': { label: 'WhatsApp', icon: '💬' },
+  'enzona': { label: 'Enzona', icon: '💳' }
+};
+
 // Fecha en que el pedido adquirió su estado actual; si nunca cambió, la de
 // creación. Agrupar y filtrar por AQUÍ: un pedido que entra el lunes y se
 // confirma el martes debe salir en «Confirmado · martes», no en «lunes».
@@ -395,6 +408,15 @@ export default function Orders() {
                               </button>
                             </>
                           )}
+                          {(() => {
+                            const pm = PAY_METHOD[o.payment_method] || PAY_METHOD.whatsapp;
+                            const ps = PAY_STATUS[o.payment_status] || PAY_STATUS.pendiente;
+                            return (
+                              <span className={`ord-pay ${ps.className}`} title={o.payment_ref ? `Ref: ${o.payment_ref}` : ''}>
+                                {' · '}{pm.icon} {pm.label} · {ps.label}
+                              </span>
+                            );
+                          })()}
                         </div>
                         <button
                           className={'adm-badge click ' + STATUS_CLASS(o.status)}
@@ -427,6 +449,28 @@ export default function Orders() {
                         <select value={o.status} disabled={busy === o.id} onChange={e => changeStatus(o, e.target.value)}>
                           {ORDER_STATUS.map(s => <option key={s} value={s} title={STATUS_HINTS[s]}>{s}</option>)}
                         </select>
+                        {(o.payment_method === 'enzona') && (
+                          <select
+                            value={o.payment_status || 'pendiente'}
+                            disabled={busy === o.id}
+                            onChange={async (e) => {
+                              const val = e.target.value;
+                              setBusy(o.id);
+                              const upd = val === 'pagado' ? { payment_status: val, paid_at: new Date().toISOString() } : { payment_status: val };
+                              const { error } = await supabase.from('orders').update(upd).eq('id', o.id);
+                              setBusy(null);
+                              if (error) { setErr(error.message); return; }
+                              setOrders(prev => prev.map(x => x.id === o.id ? { ...x, ...upd } : x));
+                            }}
+                            title="Estado de pago Enzona"
+                          >
+                            <option value="pendiente">Pago: Pendiente</option>
+                            <option value="pagado">Pago: Pagado</option>
+                            <option value="fallido">Pago: Fallido</option>
+                            <option value="cancelado">Pago: Cancelado</option>
+                            <option value="expirado">Pago: Expirado</option>
+                          </select>
+                        )}
                         {(o.status === 'Confirmado' && o.phone) && (
                           <button className="adm-linkbtn wa-confirm" onClick={() => openWa(o, true)}>
                             ✆ Enviar WhatsApp

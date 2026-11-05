@@ -142,19 +142,21 @@ export function ShopProvider({ children }) {
   return <ShopContext.Provider value={{ ...state, ready, progress }}>{children}</ShopContext.Provider>;
 }
 
-// Registra un pedido en la base. Devuelve { ok, error }.
+// Registra un pedido en la base. Devuelve { ok, error, data }.
 // Si Supabase no está configurado responde ok:false sin romper el checkout (sigue el flujo de WhatsApp).
-export async function submitOrder({ customerName, phone, items, total, shopName }) {
+export async function submitOrder({ customerName, phone, items, total, shopName, paymentMethod = 'whatsapp', paymentStatus = 'pendiente' }) {
   if (!configured || !supabase) return { ok: false };
   try {
-    const { error } = await supabase.from('orders').insert({
+    const { data, error } = await supabase.from('orders').insert({
       customer_name: customerName,
       phone,
       items,
       total,
-      status: 'Nuevo'
-    });
-    return { ok: !error, error: error ? error.message : null };
+      status: 'Nuevo',
+      payment_method: paymentMethod,
+      payment_status: paymentStatus
+    }).select().single();
+    return { ok: !error, error: error ? error.message : null, data };
   } catch (err) {
     return { ok: false, error: err.message };
   }

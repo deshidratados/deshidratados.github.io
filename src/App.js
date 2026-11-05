@@ -11,6 +11,7 @@ import CartDrawer from './components/CartDrawer';
 import LegalPage from './components/LegalPage';
 import AdminApp from './admin/AdminApp';
 import { CurrencyProvider } from './data/currency';
+import PaymentResult from './components/PaymentResult';
 import './App.css';
 
 function Home() {
@@ -62,6 +63,9 @@ function Store() {
               caen en el MISMO route y Home nunca se desmonta. Si se usara
               <Route index> + otro, cambiar de "#" a "#proceso" desmontaría la
               tienda y solo quedaría el pie de página (salto al final). */}
+          <Route path="pago/exito" element={<PaymentResult type="exito" />} />
+          <Route path="pago/cancelado" element={<PaymentResult type="cancelado" />} />
+          <Route path="pago/fallido" element={<PaymentResult type="fallido" />} />
           <Route path="*" element={<Home />} />
           <Route path="doc/:slug" element={<LegalPage />} />
         </Routes>
