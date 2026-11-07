@@ -13,7 +13,9 @@ const PAY_STATUS = {
 
 const PAY_METHOD = {
   'whatsapp': { label: 'WhatsApp', icon: '💬' },
-  'enzona': { label: 'Enzona', icon: '💳' }
+  'transfermovil': { label: 'Transfermóvil', icon: '📱' },
+  'enzona': { label: 'Enzona', icon: '💳' },
+  'qvapay': { label: 'QvaPay', icon: '⚡' }
 };
 
 // Fecha en que el pedido adquirió su estado actual; si nunca cambió, la de
@@ -413,7 +415,16 @@ export default function Orders() {
                             const ps = PAY_STATUS[o.payment_status] || PAY_STATUS.pendiente;
                             return (
                               <span className={`ord-pay ${ps.className}`} title={o.payment_ref ? `Ref: ${o.payment_ref}` : ''}>
-                                {' · '}{pm.icon} {pm.label} · {ps.label}
+                                {' · '}
+                                {o.payment_method === 'enzona' ? (
+                                  <img src={process.env.PUBLIC_URL + '/payments/enzona.png'} alt="Enzona" width="16" height="16" style={{ borderRadius: '3px', verticalAlign: 'middle' }} />
+                                ) : o.payment_method === 'transfermovil' ? (
+                                  <img src={process.env.PUBLIC_URL + '/payments/Transfermovil.png'} alt="Transfermóvil" width="16" height="16" style={{ borderRadius: '3px', verticalAlign: 'middle' }} />
+                                ) : o.payment_method === 'qvapay' ? (
+                                  <img src={process.env.PUBLIC_URL + '/payments/QvaPay.png'} alt="QvaPay" width="16" height="16" style={{ borderRadius: '3px', verticalAlign: 'middle' }} />
+                                ) : (
+                                  <img src={process.env.PUBLIC_URL + '/payments/WhatSapp.jpg'} alt="WhatsApp" width="16" height="16" style={{ borderRadius: '50%', verticalAlign: 'middle' }} />
+                                )}{' '}{pm.label} · {ps.label}
                               </span>
                             );
                           })()}
@@ -449,7 +460,7 @@ export default function Orders() {
                         <select value={o.status} disabled={busy === o.id} onChange={e => changeStatus(o, e.target.value)}>
                           {ORDER_STATUS.map(s => <option key={s} value={s} title={STATUS_HINTS[s]}>{s}</option>)}
                         </select>
-                        {(o.payment_method === 'enzona') && (
+                        {(o.payment_method === 'enzona' || o.payment_method === 'qvapay' || o.payment_method === 'transfermovil') && (
                           <select
                             value={o.payment_status || 'pendiente'}
                             disabled={busy === o.id}
@@ -462,7 +473,7 @@ export default function Orders() {
                               if (error) { setErr(error.message); return; }
                               setOrders(prev => prev.map(x => x.id === o.id ? { ...x, ...upd } : x));
                             }}
-                            title="Estado de pago Enzona"
+                            title="Estado de pago"
                           >
                             <option value="pendiente">Pago: Pendiente</option>
                             <option value="pagado">Pago: Pagado</option>

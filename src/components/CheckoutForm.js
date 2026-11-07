@@ -109,6 +109,11 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
       setNote('El pago con Enzona no está disponible en este momento.');
       return;
     }
+    if (paymentMethod === 'qvapay') {
+      setState('error');
+      setNote('El pago con QvaPay estará disponible próximamente. Por ahora usa WhatsApp, Transfermóvil o Enzona.');
+      return;
+    }
     setState('saving');
     setNote('');
 
@@ -134,6 +139,28 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
         setState('error');
         setNote('No pudimos guardar tu pedido en línea, pero tu mensaje de WhatsApp ya está listo.');
       }
+      onPlaced();
+      return;
+    }
+
+    if (paymentMethod === 'transfermovil') {
+      const res = await submitOrder({
+        customerName: customer.name || 'Cliente sin nombre',
+        phone: customer.phone,
+        items: items.map(i => ({ id: i.id, name: i.name, variant: i.variant, quantity: i.quantity })),
+        total,
+        paymentMethod: 'transfermovil',
+        paymentStatus: 'pendiente'
+      });
+
+      if (!res.ok) {
+        setState('error');
+        setNote('No pudimos guardar tu pedido. Inténtalo de nuevo.');
+        return;
+      }
+
+      setState('done');
+      setNote('Pedido registrado. Te contactaremos por WhatsApp para darte los datos de Transfermóvil y confirmar tu pago.');
       onPlaced();
       return;
     }
@@ -206,7 +233,7 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
     return (
       <div className="co-done">
         <p className="co-ok">☀ ¡Pedido registrado!</p>
-        <p>Te redirigimos a WhatsApp para confirmar tu pedido.</p>
+        <p>{note || 'Te contactaremos para coordinar el pago y la entrega.'}</p>
       </div>
     );
   }
@@ -214,8 +241,8 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
   if (state === 'redirecting') {
     return (
       <div className="co-done">
-        <p className="co-ok">Redirigiendo a Enzona...</p>
-        <p>Espera un momento, te estamos llevando a la pasarela de pago.</p>
+        <p className="co-ok">Redirigiendo a la pasarela...</p>
+        <p>Espera un momento, te estamos llevando al sitio de pago.</p>
       </div>
     );
   }
@@ -257,35 +284,76 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
         </p>
       )}
 
-      <div style={{ marginTop: '12px', marginBottom: '10px' }}>
-        <p style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#2a1f14' }}>Método de pago</p>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', cursor: 'pointer' }}>
-          <input
-            type="radio"
-            name="paymentMethod"
-            value="whatsapp"
-            checked={paymentMethod === 'whatsapp'}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-          />
-          <span>💬 Pagar por WhatsApp (confirmar por mensaje)</span>
-        </label>
-        {enzonaEnabled && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+      <div style={{ marginTop: '14px', marginBottom: '12px' }}>
+        <p style={{ fontSize: '13px', fontWeight: '600', marginBottom: '10px', color: '#2a1f14' }}>Método de pago</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', border: paymentMethod === 'whatsapp' ? '1.5px solid #25D366' : '1px solid #e7e2dc', borderRadius: '10px', cursor: 'pointer', background: paymentMethod === 'whatsapp' ? '#f6fff9' : '#fff' }}>
             <input
               type="radio"
               name="paymentMethod"
-              value="enzona"
-              checked={paymentMethod === 'enzona'}
+              value="whatsapp"
+              checked={paymentMethod === 'whatsapp'}
               onChange={(e) => setPaymentMethod(e.target.value)}
             />
-            <span>💳 Pagar con Enzona</span>
+            <img src={process.env.PUBLIC_URL + '/payments/WhatSapp.jpg'} alt="WhatsApp" width="26" height="26" style={{ borderRadius: '6px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+              <span style={{ fontWeight: '600', fontSize: '14px' }}>Pagar por WhatsApp</span>
+              <span style={{ fontSize: '12px', color: '#6b6259' }}>Confirmar pedido por mensaje</span>
+            </div>
           </label>
-        )}
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', border: paymentMethod === 'transfermovil' ? '1.5px solid #0066cc' : '1px solid #e7e2dc', borderRadius: '10px', cursor: 'pointer', background: paymentMethod === 'transfermovil' ? '#f0f7ff' : '#fff' }}>
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="transfermovil"
+              checked={paymentMethod === 'transfermovil'}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            />
+            <img src={process.env.PUBLIC_URL + '/payments/Transfermovil.png'} alt="Transfermóvil" width="26" height="26" style={{ borderRadius: '6px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+              <span style={{ fontWeight: '600', fontSize: '14px' }}>Transfermóvil</span>
+              <span style={{ fontSize: '12px', color: '#6b6259' }}>Transferencia desde Cuba</span>
+            </div>
+          </label>
+
+          {enzonaEnabled && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', border: paymentMethod === 'enzona' ? '1.5px solid #0066CC' : '1px solid #e7e2dc', borderRadius: '10px', cursor: 'pointer', background: paymentMethod === 'enzona' ? '#f7faff' : '#fff' }}>
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="enzona"
+                checked={paymentMethod === 'enzona'}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              />
+              <img src={process.env.PUBLIC_URL + '/payments/enzona.png'} alt="Enzona" width="26" height="26" style={{ borderRadius: '6px' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+                <span style={{ fontWeight: '600', fontSize: '14px' }}>Pagar con Enzona</span>
+                <span style={{ fontSize: '12px', color: '#6b6259' }}>Pago online seguro</span>
+              </div>
+            </label>
+          )}
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', border: paymentMethod === 'qvapay' ? '1.5px solid #6b46c1' : '1px solid #e7e2dc', borderRadius: '10px', cursor: 'pointer', background: paymentMethod === 'qvapay' ? '#f9f7ff' : '#fff' }}>
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="qvapay"
+              checked={paymentMethod === 'qvapay'}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            />
+            <img src={process.env.PUBLIC_URL + '/payments/QvaPay.png'} alt="QvaPay" width="26" height="26" style={{ borderRadius: '6px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+              <span style={{ fontWeight: '600', fontSize: '14px' }}>Pagar con QvaPay</span>
+              <span style={{ fontSize: '12px', color: '#6b6259' }}>Pago online</span>
+            </div>
+          </label>
+        </div>
       </div>
 
       {state === 'error' && note && <p className="co-warn">{note}</p>}
       <button className="wa-btn" type="submit" disabled={state === 'saving' || state === 'redirecting'}>
-        {state === 'saving' ? 'Procesando…' : state === 'redirecting' ? 'Redirigiendo…' : paymentMethod === 'enzona' ? 'Pagar con Enzona →' : 'Registrar y pedir por WhatsApp →'}
+        {state === 'saving' ? 'Procesando…' : state === 'redirecting' ? 'Redirigiendo…' : paymentMethod === 'enzona' ? 'Pagar con Enzona →' : paymentMethod === 'qvapay' ? 'Pagar con QvaPay →' : paymentMethod === 'transfermovil' ? 'Confirmar pedido con Transfermóvil →' : 'Registrar y pedir por WhatsApp →'}
       </button>
     </form>
   );
