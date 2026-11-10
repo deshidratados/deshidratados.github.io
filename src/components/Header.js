@@ -44,7 +44,13 @@ export default function Header({ onCartOpen }) {
         <div className="wrap head-in">
           <a href="#top" className="logo">
             <img src={process.env.PUBLIC_URL + '/logo_tienda.png'} alt="Salud & Vida" className="logo-img" />
-            <span className="logo-text">Salud & Vida<small>deshidratados · est. 2019</small></span>
+            <span className="logo-text">
+              <span className="logo-lines">
+                <span>Salud</span>
+                <span>&amp; Vida</span>
+              </span>
+              <small>deshidratados · est. 2019</small>
+            </span>
           </a>
           <nav className="main">
             <a href="#catalogo">Catálogo</a>

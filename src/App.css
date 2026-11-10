@@ -38,9 +38,10 @@ section{scroll-margin-top:96px}
 .site-header{position:sticky;top:0;z-index:100;background:rgba(250,245,234,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);transition:box-shadow .3s}
 .site-header.scrolled{box-shadow:0 8px 24px rgba(30,36,16,.08)}
 .head-in{display:flex;align-items:center;gap:1.8rem;height:70px}
-.logo{display:inline-flex;align-items:center;gap:12px;line-height:1}
-.logo-img{height:36px;width:auto;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.logo-text{font-family:var(--disp);font-size:1.5rem;font-weight:700;display:flex;flex-direction:column;line-height:1}
+.logo{display:inline-flex;align-items:center;gap:10px;line-height:1;min-width:0}
+.logo-img{height:36px;width:auto;flex:none;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.logo-text{display:flex;flex-direction:column;line-height:1;min-width:0}
+.logo-lines{display:flex;flex-wrap:wrap;column-gap:.32em;font-family:var(--disp);font-size:1.5rem;font-weight:700;white-space:nowrap}
 .logo-text small{font-family:var(--mono);font-size:.5rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ink2);font-weight:400;margin-top:6px}
 nav.main{display:flex;gap:1.6rem;font-size:.9rem;font-weight:600;color:var(--ink2)}
 nav.main a{position:relative;padding:.3rem 0;transition:color .2s}
@@ -368,20 +369,23 @@ nav.main a:hover::after{transform:scaleX(1);transform-origin:left}
 }
 /* El encabezado no cabía entre 720px y 900px: el logo con su letrero + la
    navegación + el selector de moneda + el carrito (gap 1.8rem) superaban el
-   ancho disponible y el carrito se salía por la derecha de la pantalla. */
+   ancho disponible y el carrito se salía por la derecha de la pantalla.
+   "Salud & Vida" es más largo que el nombre anterior, así que el nombre se
+   apila en dos filas (Salud / & Vida) junto al logo para ganar ancho. */
 @media(max-width:900px){
   .head-in{gap:1rem}
-  .logo{font-size:1.25rem}
+  .logo{gap:8px}
+  .logo-img{height:32px}
+  .logo-lines{flex-direction:column;column-gap:0;font-size:1.2rem;line-height:1.12}
   .logo small{display:none}
 }
 @media(max-width:720px){
   nav.main{display:none}
   .burger{display:flex}
   .head-in{height:62px;gap:.55rem}
-  /* Aun con la navegación colapsada no cabía. El logo trunca con ellipsis
-     como red de seguridad en pantallas de 320px, para que nunca exista
-     scroll horizontal: el carrito y el menú deben ser tocables siempre. */
-  .logo{display:block;font-size:1.1rem;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .logo{gap:8px}
+  .logo-img{height:30px}
+  .logo-lines{font-size:1.05rem}
   .cur-sel{flex:0 0 auto;padding:.4rem .45rem;font-size:.66rem}
   .cart-btn{flex:0 0 auto;padding:.45rem .75rem;gap:.4rem}
   .search{min-width:0;width:100%;margin-left:0}
