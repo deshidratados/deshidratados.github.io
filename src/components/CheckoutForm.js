@@ -298,7 +298,7 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
             <img src={process.env.PUBLIC_URL + '/payments/WhatSapp.jpg'} alt="WhatsApp" width="26" height="26" style={{ borderRadius: '6px' }} />
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
               <span style={{ fontWeight: '600', fontSize: '14px' }}>Pagar por WhatsApp</span>
-              <span style={{ fontSize: '12px', color: '#6b6259' }}>Confirmar pedido por mensaje</span>
+              <span style={{ fontSize: '12px', color: '#5D6850' }}>Confirmar pedido por mensaje</span>
             </div>
           </label>
 
@@ -313,7 +313,7 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
             <img src={process.env.PUBLIC_URL + '/payments/Transfermovil.png'} alt="Transfermóvil" width="26" height="26" style={{ borderRadius: '6px' }} />
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
               <span style={{ fontWeight: '600', fontSize: '14px' }}>Transfermóvil</span>
-              <span style={{ fontSize: '12px', color: '#6b6259' }}>Transferencia desde Cuba</span>
+              <span style={{ fontSize: '12px', color: '#5D6850' }}>Transferencia desde Cuba</span>
             </div>
           </label>
 
@@ -329,7 +329,7 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
               <img src={process.env.PUBLIC_URL + '/payments/enzona.png'} alt="Enzona" width="26" height="26" style={{ borderRadius: '6px' }} />
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
                 <span style={{ fontWeight: '600', fontSize: '14px' }}>Pagar con Enzona</span>
-                <span style={{ fontSize: '12px', color: '#6b6259' }}>Pago online seguro</span>
+                <span style={{ fontSize: '12px', color: '#5D6850' }}>Pago online seguro</span>
               </div>
             </label>
           )}
@@ -345,7 +345,7 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
             <img src={process.env.PUBLIC_URL + '/payments/QvaPay.png'} alt="QvaPay" width="26" height="26" style={{ borderRadius: '6px' }} />
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
               <span style={{ fontWeight: '600', fontSize: '14px' }}>Pagar con QvaPay</span>
-              <span style={{ fontSize: '12px', color: '#6b6259' }}>Pago online</span>
+              <span style={{ fontSize: '12px', color: '#5D6850' }}>Pago online</span>
             </div>
           </label>
         </div>

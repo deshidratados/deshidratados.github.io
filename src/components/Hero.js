@@ -47,11 +47,11 @@ export default function Hero() {
           <div className="sun-badge" aria-hidden="true">
             <svg viewBox="0 0 120 120">
               <defs><path id="circ" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0" /></defs>
-              <text style={{ fontFamily: "'Space Mono', monospace", fontSize: '8.6px', letterSpacing: '2px', fill: '#261B10' }}>
+              <text style={{ fontFamily: "'Space Mono', monospace", fontSize: '8.6px', letterSpacing: '2px', fill: '#1E2410' }}>
                 <textPath href="#circ">SECADO LENTO · SIN CONSERVADORES · </textPath>
               </text>
-              <circle cx="60" cy="60" r="13" fill="#B85C38" />
-              <g stroke="#261B10" strokeWidth="2" strokeLinecap="round">
+              <circle cx="60" cy="60" r="13" fill="#7CB121" />
+              <g stroke="#1E2410" strokeWidth="2" strokeLinecap="round">
                 <line x1="60" y1="38" x2="60" y2="43" /><line x1="60" y1="77" x2="60" y2="82" />
                 <line x1="38" y1="60" x2="43" y2="60" /><line x1="77" y1="60" x2="82" y2="60" />
                 <line x1="44.4" y1="44.4" x2="48" y2="48" /><line x1="72" y1="72" x2="75.6" y2="75.6" />
@@ -72,7 +72,7 @@ export default function Hero() {
 
 export function Marquee() {
   const { products } = useShop();
-  const names = products.length ? products.map(p => p.name) : ['Solaria · deshidratados'];
+  const names = products.length ? products.map(p => p.name) : ['Salud & Vida · deshidratados'];
   const group = (
     <div className="mgroup">
       {names.map(i => <span key={i}>{i} <i>✳</i></span>)}

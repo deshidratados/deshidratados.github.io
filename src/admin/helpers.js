@@ -33,9 +33,9 @@ export const STATUS_CLASS = (s) => {
 // Textos de aviso al cliente al cambiar el estado (se usan en el WhatsApp).
 export const STATUS_NOTIFY = {
   Nuevo: 'Tu pedido quedó como *nuevo*. Enseguida lo revisamos.',
-  Confirmado: '✅ ¡Tu pedido ha sido *confirmado*! Gracias por comprar en Solaria.',
+  Confirmado: '✅ ¡Tu pedido ha sido *confirmado*! Gracias por comprar en Salud & Vida.',
   Enviado: '📦 ¡Tu pedido está *en camino*! Pronto lo tendrás contigo.',
-  Completado: '☀ ¡Pedido *entregado*! Gracias por comprar en Solaria.',
+  Completado: '☀ ¡Pedido *entregado*! Gracias por comprar en Salud & Vida.',
   Cancelado: 'Tu pedido quedó *cancelado*. Si tienes dudas, respóndenos por aquí mismo.'
 };
 

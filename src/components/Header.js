@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useShop } from '../data/shop';
 import { CURRENCIES, useCurrency } from '../data/currency';
-import SunLogo from './SunLogo';
 
 export default function Header({ onCartOpen }) {
   const { itemCount, total } = useCart();
@@ -44,8 +43,8 @@ export default function Header({ onCartOpen }) {
       <header className={'site-header' + (scrolled ? ' scrolled' : '')}>
         <div className="wrap head-in">
           <a href="#top" className="logo">
-            <SunLogo size={30} className="logo-sun" />
-            <span className="logo-text">Solaria<small>deshidratados · est. 2019</small></span>
+            <img src={process.env.PUBLIC_URL + '/logo_tienda.png'} alt="Salud & Vida" className="logo-img" />
+            <span className="logo-text">Salud & Vida<small>deshidratados · est. 2019</small></span>
           </a>
           <nav className="main">
             <a href="#catalogo">Catálogo</a>

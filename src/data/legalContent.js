@@ -84,7 +84,7 @@ Escríbenos por WhatsApp. Si el pedido llega dañado, incompleto o con un defect
 
 ## 1. Quiénes somos
 
-Solaria es un taller artesanal de frutas, verduras y hierbas deshidratadas. Este sitio es su catálogo público. Cualquier pedido que hagas aquí se confirma y cierra directamente con nosotros por WhatsApp.
+Salud & Vida es un taller artesanal de frutas, verduras y hierbas deshidratadas. Este sitio es su catálogo público. Cualquier pedido que hagas aquí se confirma y cierra directamente con nosotros por WhatsApp.
 
 ## 2. Cómo se forma un pedido
 
@@ -118,7 +118,7 @@ Si tu pedido llega dañado, incompleto o con un defecto de calidad, escríbenos 
 
 ## 7. Propiedad intelectual
 
-Las fotografías, textos, logotipo y diseño de este sitio son propiedad de Solaria. No pueden reproducirse ni usarse con fines comerciales sin autorización.
+Las fotografías, textos, logotipo y diseño de este sitio son propiedad de Salud & Vida. No pueden reproducirse ni usarse con fines comerciales sin autorización.
 
 ## 8. Limitación de responsabilidad
 
@@ -138,7 +138,7 @@ Estos términos se rigen por la legislación de la República de Cuba. Cualquier
 
 ## Quién recoge tus datos
 
-**Solaria** (en adelante, "la Tienda") es responsable de los datos personales que nos facilitas al usar este sitio y al hacer un pedido.
+**Salud & Vida** (en adelante, "la Tienda") es responsable de los datos personales que nos facilitas al usar este sitio y al hacer un pedido.
 
 Puedes contactarnos por WhatsApp desde el enlace del pie de página o escribirnos al correo de contacto indicado allí.
 

@@ -79,7 +79,7 @@ export default function Orders() {
     const lines = confirm
       ? [
           `Hola ${o.customer_name}! ☀`,
-          `Tu pedido ha sido *confirmado*. ¡Gracias por comprar en Solaria!`,
+          `Tu pedido ha sido *confirmado*. ¡Gracias por comprar en Salud & Vida!`,
           ...(o.items || []).map(it => `• ${it.quantity}× ${it.name}${it.variant ? ` (${it.variant.label})` : ''}`),
           `Total: ${money(o.total)}`,
           `Te avisamos cuando salga para entrega.`
@@ -99,7 +99,7 @@ export default function Orders() {
     '',
     ...(o.items || []).map(it => `• ${it.quantity}× ${it.name}${it.variant ? ` (${it.variant.label})` : ''}`),
     `Total: ${money(o.total)}`,
-    '— Solaria · deshidratados'
+    '— Salud & Vida · deshidratados'
   ].join('\n');
 
   // Al cambiar el estado, ofrece avisar al cliente por WhatsApp si tiene

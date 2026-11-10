@@ -49,7 +49,7 @@ export default function CartDrawer({ isOpen, onClose }) {
         <div className={'cart-list' + (step === 2 ? ' off' : '')}>
           {cart.length === 0 ? (
             <div className="cart-empty">
-              <span className="big">☀</span>
+              <img src={process.env.PUBLIC_URL + '/logo_tienda.png'} alt="" style={{ width: '56px', height: 'auto', borderRadius: '10px', opacity: .85 }} />
               <p>Tu canasta está vacía.</p>
               {/* Ancla real a la sección del catálogo: antes era un botón
                   que solo cerraba el cajón sin llevar a ninguna parte.

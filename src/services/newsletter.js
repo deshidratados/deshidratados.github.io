@@ -226,12 +226,12 @@ export async function sendWelcomeEmail(email) {
 // Plantillas por defecto
 // ============================================================
 
-export const DEFAULT_SUBJECT = '📰 Solaria · Boletín de ofertas';
+export const DEFAULT_SUBJECT = '📰 Salud & Vida · Boletín de ofertas';
 
 // Mensaje por defecto del boletín en TEXTO LLANO (lo que escribe el admin).
-// El sistema lo envuelve en buildNewsletterHtml con el estilo de Solaria y
+// El sistema lo envuelve en buildNewsletterHtml con el estilo de Salud & Vida y
 // el enlace de «Darse de baja»: el admin nunca toca HTML.
-export const DEFAULT_BODY = `## Bienvenido al boletín de Solaria
+export const DEFAULT_BODY = `## Bienvenido al boletín de Salud & Vida
 
 En este boletín encontrarás:
 
@@ -249,7 +249,7 @@ Guarda tus deshidratados en un lugar fresco y seco, lejos de la luz directa del 
 
 /**
  * Envuelve el contenido ya renderizado (HTML de renderMarkdown) en la
- * plantilla de email de Solaria: estilos, cabecera y pie con el enlace de
+ * plantilla de email de Salud & Vida: estilos, cabecera y pie con el enlace de
  * baja {{UNSUBSCRIBE_URL}} que la Edge Function personaliza en cada correo.
  * @param {string} contentHtml - Cuerpo ya convertido a HTML
  * @returns {string} HTML completo del email
@@ -260,32 +260,32 @@ export function buildNewsletterHtml(contentHtml) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Solaria · Boletín</title>
+  <title>Salud & Vida · Boletín</title>
   <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #EDE2CE; }
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #ECEEE0; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #B85C38; }
-    .header h1 { margin: 0; color: #B85C38; font-size: 24px; }
-    .header p { margin: 8px 0 0; color: #6E5D49; font-size: 14px; }
-    .content { padding: 20px 0; line-height: 1.6; color: #261B10; }
-    .content h2 { margin-top: 0; color: #261B10; }
+    .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #7CB121; }
+    .header h1 { margin: 0; color: #7CB121; font-size: 24px; }
+    .header p { margin: 8px 0 0; color: #5D6850; font-size: 14px; }
+    .content { padding: 20px 0; line-height: 1.6; color: #1E2410; }
+    .content h2 { margin-top: 0; color: #1E2410; }
     .content p { margin-bottom: 16px; }
-    .footer { text-align: center; padding: 20px 0; border-top: 1px solid #EDE2CE; color: #6E5D49; font-size: 12px; }
-    .footer a { color: #B85C38; }
-    .unsubscribe { margin-top: 20px; padding: 12px; background: #EDE2CE; border-radius: 8px; text-align: center; font-size: 13px; }
+    .footer { text-align: center; padding: 20px 0; border-top: 1px solid #ECEEE0; color: #5D6850; font-size: 12px; }
+    .footer a { color: #7CB121; }
+    .unsubscribe { margin-top: 20px; padding: 12px; background: #ECEEE0; border-radius: 8px; text-align: center; font-size: 13px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>☀ Solaria · Deshidratados</h1>
+      <h1>Salud & Vida · Deshidratados</h1>
       <p>Tu boletín semanal de ofertas y novedades</p>
     </div>
     <div class="content">
 ${contentHtml || ''}
     </div>
     <div class="footer">
-      <p>Hecho con ❤️ para Solaria · Deshidratados</p>
+      <p>Hecho con ❤️ para Salud & Vida · Deshidratados</p>
       <p>¿No quieres recibir más emails? <a href="{{UNSUBSCRIBE_URL}}">Darse de baja</a></p>
     </div>
     <div class="unsubscribe">

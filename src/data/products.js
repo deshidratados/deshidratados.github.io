@@ -87,7 +87,7 @@ export const products = [
     name: 'Mix Senderista',
     category: 'mixes',
     description: 'Mango, arándano, almendra y pepita. Energía de montaña.',
-    origin: 'Casa Solaria',
+    origin: 'Casa Salud & Vida',
     rating: 4.9,
     reviews: 341,
     badge: 'Nuevo',

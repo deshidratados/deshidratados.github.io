@@ -1,12 +1,12 @@
 /* ============ Panel de administración ============ */
 .adm,
 .adm-plain {
-  --adm-bg: #f6f0e6;
-  --adm-card: #fffdf8;
-  --adm-line: #e7dcc8;
-  --adm-ink: #1e1710;
-  --adm-mut: #8a7a63;
-  --adm-accent: #c4531f;
+  --adm-bg: #F8F8F0;
+  --adm-card: #FFFFFA;
+  --adm-line: #DFE3CE;
+  --adm-ink: #1E2410;
+  --adm-mut: #5D6850;
+  --adm-accent: #7CB121;
   min-height: 100vh;
   font-family: inherit;
 }
@@ -353,7 +353,7 @@
   outline: none;
   transition: border-color .2s, box-shadow .2s;
 }
-.adm-search:focus { border-color: var(--adm-accent, #C4531F); box-shadow: 0 0 0 3px rgba(196,83,31,.12); }
+.adm-search:focus { border-color: var(--adm-accent, #7CB121); box-shadow: 0 0 0 3px rgba(124,177,33,.12); }
 .adm-chip { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--adm-line); background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--adm-mut); }
 .adm-chip.pulse { animation: chipPulse 1.4s ease-in-out infinite; }
 .adm-chip.pulse.on { animation: chipPulseOn 1.4s ease-in-out infinite; }
@@ -366,7 +366,7 @@
   50% { box-shadow: 0 0 0 8px rgba(196, 83, 31, 0); }
 }
 @media (prefers-reduced-motion: reduce) { .adm-chip.pulse, .adm-chip.pulse.on { animation: none; } }
-.adm-chip.on { background: var(--adm-accent, #C4531F); color: #fff; border-color: var(--adm-accent, #C4531F); }
+.adm-chip.on { background: var(--adm-accent, #7CB121); color: #fff; border-color: var(--adm-accent, #7CB121); }
 
 /* Leyenda de estados de pedido */
 .adm-status-legend { display: flex; flex-wrap: wrap; gap: 12px 20px; margin: 4px 0 18px; }

@@ -98,7 +98,7 @@ export default function Reviews() {
               </div>
               <span className={'adm-badge ' + STATUS_CLASS[r.status]}>{STATUS_LABEL[r.status]}</span>
             </div>
-            <div className="quote-stars" style={{ color: '#B85C38', marginBottom: 6 }}>
+            <div className="quote-stars" style={{ color: '#7CB121', marginBottom: 6 }}>
               {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
             </div>
             <p style={{ margin: '0 0 10px' }}>{r.comment}</p>

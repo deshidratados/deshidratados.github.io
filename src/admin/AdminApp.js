@@ -18,7 +18,10 @@ function AdminLayout() {
   return (
     <div className="adm">
       <aside className="adm-side">
-        <div className="adm-brand">☀ Solaria <small>panel</small></div>
+        <div className="adm-brand">
+          <img src={process.env.PUBLIC_URL + '/logo_tienda.png'} alt="" style={{ height: '28px', width: 'auto', borderRadius: '6px' }} />
+          {' '}Salud &amp; Vida <small>panel</small>
+        </div>
         <nav className="adm-nav">
           <NavLink to="/admin" end>Panel</NavLink>
           <NavLink to="/admin/productos">Productos</NavLink>

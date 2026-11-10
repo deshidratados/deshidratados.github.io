@@ -13,7 +13,7 @@ const FIELDS = [
   { key: 'freeShip', label: 'Envío gratis a partir de', type: 'number', help: 'Monto en la moneda base (la de los precios del catálogo).' },
   { key: 'heroPromo', label: 'Promoción del inicio', type: 'text', help: 'Texto que se superpone a las fotos del inicio (p. ej. «desde US$23» o «2x1 este fin de semana»). Déjalo vacío para el automático: «desde» + el precio más bajo del catálogo.' },
   { key: 'email', label: 'Correo de contacto', type: 'email', help: 'Aparece en el pie de página.' },
-  { key: 'newsletter_from', label: 'Email remitente del boletín', type: 'text', help: 'Remitente que usa Brevo. Debe ser una dirección VERIFICADA en Brevo (SMTP & API → Senders). Admite nombre visible: "Solaria · Deshidratados <solaria024@gmail.com>".' },
+  { key: 'newsletter_from', label: 'Email remitente del boletín', type: 'text', help: 'Remitente que usa Brevo. Debe ser una dirección VERIFICADA en Brevo (SMTP & API → Senders). Admite nombre visible: "Salud & Vida · Deshidratados <solaria024@gmail.com>".' },
   { key: 'instagram', label: 'Instagram', type: 'text', help: 'Con @ o con la URL completa. Déjalo vacío si no lo manejas.' },
   { key: 'hours', label: 'Horario (pie de página)', type: 'textarea', help: 'Un renglón por horario. Déjalo vacío para ocultar la columna.' },
   { key: 'currencyBase', label: 'Moneda de los precios', type: 'select', options: ['USD', 'CUP', 'EUR'], help: 'En qué moneda escribes los precios en Productos. El visitante ve la conversión a su moneda.' },
@@ -22,14 +22,14 @@ const FIELDS = [
 ];
 
 // Configuración del boletín. El contenido es TEXTO LLANO (lo que sabe
-// escribir cualquiera): el HTML con el estilo de Solaria y el enlace de
+// escribir cualquiera): el HTML con el estilo de Salud & Vida y el enlace de
 // «Darse de baja» lo construye el sistema al previsualizar y al enviar
 // (buildNewsletterHtml en src/services/newsletter.js).
 const NEWSLETTER_FIELDS = [
   { key: 'newsletter_subject', label: 'Asunto del boletín', type: 'text', help: 'Lo que aparece en el asunto del email.', default: DEFAULT_SUBJECT },
   // La clave se llama newsletter_html por compatibilidad con lo ya guardado;
   // su valor desde ahora es texto llano (ver htmlToBody al cargar).
-  { key: 'newsletter_html', label: 'Mensaje del boletín', type: 'textarea', help: 'Escríbelo con normalidad, como un mensaje. Un renglón en blanco separa párrafos, "#" inicia un título, "-" una lista, **negritas** y [enlaces](https://…) también funcionan. El diseño de Solaria y el enlace de «Darse de baja» se añaden solos.', default: DEFAULT_BODY }
+  { key: 'newsletter_html', label: 'Mensaje del boletín', type: 'textarea', help: 'Escríbelo con normalidad, como un mensaje. Un renglón en blanco separa párrafos, "#" inicia un título, "-" una lista, **negritas** y [enlaces](https://…) también funcionan. El diseño de Salud & Vida y el enlace de «Darse de baja» se añaden solos.', default: DEFAULT_BODY }
 ];
 
 // Cada documento legal vive en una clave propia de `settings`.
@@ -273,7 +273,7 @@ export default function Settings() {
   useEffect(() => { loadHistory(); }, [loadHistory]);
 
   // Vista previa con debounce de 300ms: el texto llano se convierte en HTML
-  // con la plantilla de Solaria — exactamente lo que se enviará.
+  // con la plantilla de Salud & Vida — exactamente lo que se enviará.
   useEffect(() => {
     const t = setTimeout(() => {
       setPreviewHtml(buildNewsletterHtml(renderMarkdown(newsletter.newsletter_html || '')));
@@ -359,7 +359,7 @@ export default function Settings() {
       }
 
       // 3) Enviar (el servicio trocea internamente en lotes de 50).
-      // El texto llano viaja envuelto en la plantilla de Solaria, con el
+      // El texto llano viaja envuelto en la plantilla de Salud & Vida, con el
       // enlace de baja que la Edge Function personaliza en cada correo.
       const result = await sendNewsletter(emails, {
         subject: newsletter.newsletter_subject,

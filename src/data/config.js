@@ -1,5 +1,5 @@
 export const SHOP = {
-  name: 'Solaria',
+  name: 'Salud & Vida',
   whatsapp: '5354410057', // ← código país + número, solo dígitos. Cuba: 53…
   freeShip: 100,            // ← monto (en la moneda base) desde el que no se cobra envío
   // Datos que aparecen en el pie de página. Todos se pueden cambiar desde

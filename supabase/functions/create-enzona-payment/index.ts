@@ -82,7 +82,7 @@ Deno.serve(async (req: Request) => {
       invoice_number: invoiceNo,
       amount: Number(amount).toFixed(2),
       currency: 'CUP', // Ajustar si es USD
-      description: `Pedido Solaria - ${orderId.slice(0, 8)}`,
+      description: `Pedido Salud & Vida - ${orderId.slice(0, 8)}`,
       return_url: returnUrl || '',
       cancel_url: cancelUrl || returnUrl || '',
       customer_name: customerName || '',

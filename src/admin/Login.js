@@ -29,7 +29,10 @@ export default function Login() {
   return (
     <div className="adm-plain">
       <form className="adm-card adm-login adm-form" onSubmit={onSubmit}>
-        <h1>☀ Solaria · Panel</h1>
+        <h1>
+          <img src={process.env.PUBLIC_URL + '/logo_tienda.png'} alt="" style={{ height: '38px', width: 'auto', verticalAlign: '-8px', borderRadius: '8px', marginRight: '10px' }} />
+          Salud &amp; Vida · Panel
+        </h1>
         <p className="adm-sub">Inicia sesión para administrar la tienda.</p>
         <label>Correo
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus />

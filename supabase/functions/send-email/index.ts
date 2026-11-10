@@ -60,14 +60,14 @@ const UNSUB_PLACEHOLDER = '{{UNSUBSCRIBE_URL}}';
 
 // Plantilla fija del correo de bienvenida. Vive en el servidor a propósito:
 // quien llame sin sesión no puede alterar ni el asunto ni el contenido.
-const WELCOME_SUBJECT = 'Bienvenido a Solaria · Deshidratados 🌴';
+const WELCOME_SUBJECT = 'Bienvenido a Salud & Vida · Deshidratados 🌴';
 
 const WELCOME_HTML = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bienvenido a Solaria</title>
+  <title>Bienvenido a Salud & Vida</title>
   <style>
     body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f6f0e6; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -82,10 +82,10 @@ const WELCOME_HTML = `<!DOCTYPE html>
 <body>
   <div class="container">
     <div class="header">
-      <h1>☀ Solaria · Deshidratados</h1>
+      <h1>Salud &amp; Vida · Deshidratados</h1>
     </div>
     <div class="content">
-      <h2>¡Bienvenido a Solaria!</h2>
+      <h2>¡Bienvenido a Salud & Vida!</h2>
       <p>Gracias por suscribirte a nuestro boletín. A partir de ahora recibirás ofertas exclusivas, nuevas presentaciones y consejos para conservar tus deshidratados.</p>
       <p>¿Qué encontrarás en nuestro catálogo?</p>
       <ul>
@@ -94,11 +94,11 @@ const WELCOME_HTML = `<!DOCTYPE html>
         <li>🍉 Papaya al 100%</li>
         <li>🥭 Pitaya y más...</li>
       </ul>
-      <p>Visítanos en <a href="https://deshidratados.github.io/">solaria.cu</a> para explorar todo nuestro catálogo.</p>
+      <p>Visítanos en <a href="https://deshidratados.github.io/">nuestra tienda</a> para explorar todo nuestro catálogo.</p>
       <p>¡Disfruta tus deshidratados! 🌴</p>
     </div>
     <div class="footer">
-      <p>Hecho con ❤️ para Solaria · Deshidratados</p>
+      <p>Hecho con ❤️ para Salud &amp; Vida · Deshidratados</p>
       <p>¿No quieres recibir más emails? <a href="{{UNSUBSCRIBE_URL}}">Darse de baja</a></p>
     </div>
   </div>
@@ -226,7 +226,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Brevo separa nombre visible y dirección en el body
-    // ("Solaria <solaria024@gmail.com>" → {name, email}).
+    // ("Salud & Vida <solaria024@gmail.com>" → {name, email}).
     const sender = parseSender(from);
     if (!emailRe.test(sender.email)) {
       return json({
@@ -316,7 +316,7 @@ Deno.serve(async (req: Request) => {
 
 /**
  * Extrae nombre visible y dirección de un remitente tipo
- * "Solaria · Deshidratados <solaria024@gmail.com>" o solo "solaria024@gmail.com".
+ * "Salud & Vida <solaria024@gmail.com>" o solo "solaria024@gmail.com".
  */
 function parseSender(from: string): { email: string; name?: string } {
   const lt = from.indexOf('<');

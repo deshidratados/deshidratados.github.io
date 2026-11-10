@@ -76,7 +76,7 @@ Deno.serve(async (req: Request) => {
           app_id: APP_ID,
           app_secret: APP_SECRET,
           amount: Number(amount).toFixed(2),
-          description: `Pedido Solaria - ${orderId.slice(0, 8)}`,
+          description: `Pedido Salud & Vida - ${orderId.slice(0, 8)}`,
           remote_id: orderId,
           callback_url: returnUrl,
           cancel_url: cancelUrl || returnUrl
