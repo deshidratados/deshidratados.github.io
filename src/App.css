@@ -1,7 +1,7 @@
 :root{
-  --bg:#FAF5EA; --card:#FFFCF4; --paper:#F1E7D0; --ink:#1E1710; --ink2:#6E5D49;
-  --terra:#C4531F; --terra-d:#9E3E12; --olive:#4F5A33; --gold:#D9A441;
-  --line:rgba(30,23,16,.14);
+  --bg:#F6F1E7; --card:#FCFAF5; --paper:#EDE2CE; --ink:#261B10; --ink2:#6E5D49;
+  --terra:#B85C38; --terra-d:#8F4126; --olive:#5A6647; --gold:#C89B4A;
+  --line:rgba(38,27,16,.14);
   --disp:'Fraunces',Georgia,serif; --body:'Karla',system-ui,sans-serif; --mono:'Space Mono',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -38,8 +38,10 @@ section{scroll-margin-top:96px}
 .site-header{position:sticky;top:0;z-index:100;background:rgba(250,245,234,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);transition:box-shadow .3s}
 .site-header.scrolled{box-shadow:0 8px 24px rgba(30,23,16,.08)}
 .head-in{display:flex;align-items:center;gap:1.8rem;height:70px}
-.logo{font-family:var(--disp);font-size:1.5rem;font-weight:700;display:flex;flex-direction:column;line-height:1}
-.logo small{font-family:var(--mono);font-size:.5rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ink2);font-weight:400;margin-top:3px}
+.logo{display:inline-flex;align-items:center;gap:12px;line-height:1}
+.logo-sun{color:var(--terra);display:inline-flex}
+.logo-text{font-family:var(--disp);font-size:1.5rem;font-weight:700;display:flex;flex-direction:column;line-height:1}
+.logo-text small{font-family:var(--mono);font-size:.5rem;letter-spacing:.26em;text-transform:uppercase;color:var(--ink2);font-weight:400;margin-top:6px}
 nav.main{display:flex;gap:1.6rem;font-size:.9rem;font-weight:600;color:var(--ink2)}
 nav.main a{position:relative;padding:.3rem 0;transition:color .2s}
 nav.main a:hover{color:var(--ink)}
@@ -90,11 +92,11 @@ nav.main a:hover::after{transform:scaleX(1);transform-origin:left}
 @keyframes dealIn{from{opacity:0;transform:translateY(14px)}}
 .polaroid figcaption{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ink2);display:flex;align-items:baseline;gap:.55rem;border-top:1px dashed rgba(30,23,16,.2);margin-top:9px;padding-top:8px}
 .polaroid figcaption .pnum{color:var(--terra);font-weight:700;flex:none}
-.polaroid-sk{width:100%;aspect-ratio:var(--ar,4/5);border-radius:8px;background:linear-gradient(100deg,#f6f0e6 38%,#fffdf6 50%,#f6f0e6 62%);background-size:200% 100%;animation:skShimmer 1.5s linear infinite}
+.polaroid-sk{width:100%;aspect-ratio:var(--ar,4/5);border-radius:8px;background:linear-gradient(100deg,#EDE2CE 38%,#FCFAF5 50%,#EDE2CE 62%);background-size:200% 100%;animation:skShimmer 1.5s linear infinite}
 @keyframes skShimmer{to{background-position:-200% 0}}
 /* Pantalla de carga inicial (BootLoader): tapa la tienda hasta que estén
    los datos y las imágenes principales, o hasta el tope de 4 s. */
-.boot{position:fixed;inset:0;z-index:400;background:#f6f0e6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px}
+.boot{position:fixed;inset:0;z-index:400;background:#EDE2CE;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px}
 .boot-sun{animation:bootSpin 9s linear infinite}
 .boot-name{font-family:var(--mono);font-size:1.5rem;letter-spacing:.45em;text-indent:.45em;color:var(--ink);margin:0}
 .boot-sub{font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);margin:0}

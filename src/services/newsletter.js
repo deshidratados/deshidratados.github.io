@@ -262,17 +262,17 @@ export function buildNewsletterHtml(contentHtml) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Solaria · Boletín</title>
   <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f6f0e6; }
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #EDE2CE; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #C4531F; }
-    .header h1 { margin: 0; color: #C4531F; font-size: 24px; }
-    .header p { margin: 8px 0 0; color: #8a7a63; font-size: 14px; }
-    .content { padding: 20px 0; line-height: 1.6; color: #1e1710; }
-    .content h2 { margin-top: 0; color: #1e1710; }
+    .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #B85C38; }
+    .header h1 { margin: 0; color: #B85C38; font-size: 24px; }
+    .header p { margin: 8px 0 0; color: #6E5D49; font-size: 14px; }
+    .content { padding: 20px 0; line-height: 1.6; color: #261B10; }
+    .content h2 { margin-top: 0; color: #261B10; }
     .content p { margin-bottom: 16px; }
-    .footer { text-align: center; padding: 20px 0; border-top: 1px solid #e7dcc8; color: #8a7a63; font-size: 12px; }
-    .footer a { color: #C4531F; }
-    .unsubscribe { margin-top: 20px; padding: 12px; background: #f6f0e6; border-radius: 8px; text-align: center; font-size: 13px; }
+    .footer { text-align: center; padding: 20px 0; border-top: 1px solid #EDE2CE; color: #6E5D49; font-size: 12px; }
+    .footer a { color: #B85C38; }
+    .unsubscribe { margin-top: 20px; padding: 12px; background: #EDE2CE; border-radius: 8px; text-align: center; font-size: 13px; }
   </style>
 </head>
 <body>

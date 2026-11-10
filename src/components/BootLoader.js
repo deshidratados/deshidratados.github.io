@@ -6,7 +6,7 @@ export default function BootLoader({ loaded = 0, total = 0 }) {
   return (
     <div className="boot" role="status" aria-live="polite">
       <svg className="boot-sun" viewBox="0 0 120 120" width="110" height="110" aria-hidden="true">
-        <g stroke="#1E1710" strokeWidth="5" strokeLinecap="round">
+        <g stroke="#261B10" strokeWidth="5" strokeLinecap="round">
           <line x1="60" y1="8" x2="60" y2="22" />
           <line x1="60" y1="98" x2="60" y2="112" />
           <line x1="8" y1="60" x2="22" y2="60" />
@@ -16,7 +16,7 @@ export default function BootLoader({ loaded = 0, total = 0 }) {
           <line x1="97" y1="23" x2="87" y2="33" />
           <line x1="33" y1="87" x2="23" y2="97" />
         </g>
-        <circle cx="60" cy="60" r="28" fill="#C4531F" />
+        <circle cx="60" cy="60" r="28" fill="#B85C38" />
       </svg>
       <p className="boot-name">SOLARIA</p>
       <p className="boot-sub">deshidratados · cargando la tienda</p>

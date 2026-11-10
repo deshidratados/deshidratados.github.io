@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useShop } from '../data/shop';
 import { CURRENCIES, useCurrency } from '../data/currency';
+import SunLogo from './SunLogo';
 
 export default function Header({ onCartOpen }) {
   const { itemCount, total } = useCart();
@@ -42,7 +43,10 @@ export default function Header({ onCartOpen }) {
       <div className="announce" aria-hidden="true"><span key={msg}>{MSGS[msg]}</span></div>
       <header className={'site-header' + (scrolled ? ' scrolled' : '')}>
         <div className="wrap head-in">
-          <a href="#top" className="logo">☀ {shop.name}<small>deshidratados · est. 2019</small></a>
+          <a href="#top" className="logo">
+            <SunLogo size={30} className="logo-sun" />
+            <span className="logo-text">Solaria<small>deshidratados · est. 2019</small></span>
+          </a>
           <nav className="main">
             <a href="#catalogo">Catálogo</a>
             <a href="#proceso">Proceso</a>
