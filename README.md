@@ -99,6 +99,21 @@ y solo necesita el dashboard, sin instalar la CLI:
 > `solaria024@gmail.com`). Brevo verifica una dirección de correo con un
 > código de confirmación, sin necesidad de dominio propio ni registros DNS.
 
+### 3.1 Activar pagos con Enzona
+
+La guía completa está en [`supabase/ENZONA_SETUP.md`](supabase/ENZONA_SETUP.md).
+Resumen:
+
+1. Guardar en **Edge Functions → Secrets**: `ENZONA_CONSUMER_KEY`,
+   `ENZONA_CONSUMER_SECRET`, `ENZONA_MERCHANT_UUID` y `ENZONA_ENV`
+   (`sandbox` o `production`).
+2. Desplegar las funciones `create-enzona-payment` y `enzona-confirm`.
+3. Probar con una compra pequeña en sandbox y, al validar, cambiar
+   `ENZONA_ENV` a `production`.
+
+> Enzona no usa webhooks: el pedido se marca como **pagado** cuando el cliente
+> vuelve a la tienda y `enzona-confirm` cierra la transacción.
+
 ### 4. Publicar en GitHub Pages (deploy automático)
 
 1. Sube los cambios a la rama `main` del repositorio (`git push`).

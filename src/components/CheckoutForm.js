@@ -77,11 +77,6 @@ function buildWaUrl(shop, items, total, customer, buyer, fmt) {
   return `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent(lines.join('\n'))}`;
 }
 
-const { createClient } = await import('@supabase/supabase-js');
-const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
-const SUPABASE_ANON = process.env.REACT_APP_SUPABASE_ANON_KEY;
-const supabaseClient = SUPABASE_URL && SUPABASE_ANON ? createClient(SUPABASE_URL, SUPABASE_ANON) : null;
-
 export default function CheckoutForm({ items, total, onPlaced, onClose }) {
   const { shop } = useShop();
   const { fmt } = useCurrency();
@@ -187,21 +182,18 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
         const orderId = res.data.id;
         const origin = window.location.origin;
         const basePath = window.location.pathname.replace(/\/$/, '');
-        const returnUrl = `${origin}${basePath}/#/pago/exito?order=${orderId}`;
-        const cancelUrl = `${origin}${basePath}/#/pago/cancelado?order=${orderId}`;
+        const returnUrl = `${origin}${basePath}/#/pago/exito`;
+        const cancelUrl = `${origin}${basePath}/#/pago/cancelado`;
 
         const resp = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/create-enzona-payment`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY
+            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
           },
           body: JSON.stringify({
             orderId,
-            amount: total,
-            customerName: customer.name || 'Cliente',
-            phone: customer.phone,
-            items: items.map(i => ({ name: i.name, variant: i.variant.label, quantity: i.quantity, price: i.variant.price })),
             returnUrl,
             cancelUrl
           })
@@ -210,11 +202,6 @@ export default function CheckoutForm({ items, total, onPlaced, onClose }) {
         const data = await resp.json();
         if (!resp.ok || !data.paymentUrl) {
           throw new Error(data.error || 'No se pudo generar el enlace de pago');
-        }
-
-        // Guardar URL de pago
-        if (supabaseClient) {
-          await supabaseClient.from('orders').update({ payment_url: data.paymentUrl }).eq('id', orderId);
         }
 
         onPlaced();
