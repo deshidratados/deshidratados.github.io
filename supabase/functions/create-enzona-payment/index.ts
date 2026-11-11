@@ -16,8 +16,9 @@
 //   ENZONA_TERMINAL_ID      Terminal/POS si el panel lo exige
 //   ENZONA_API_BASE         Fuerza la base (p. ej. https://apisandbox.enzona.net)
 //
-// El pedido guarda su total en la moneda base (USD por defecto) y Enzona cobra
-// en CUP: se convierte con el tipo de cambio `rateCUP` de la tabla settings.
+// El pedido guarda su total en la moneda base (CUP por defecto). Enzona cobra
+// en CUP: si la base es CUP se envía tal cual; si es USD/EUR se convierte con
+// los tipos de cambio de la tabla settings.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 

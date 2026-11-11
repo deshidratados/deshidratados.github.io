@@ -84,7 +84,7 @@ export function CurrencyProvider({ children }) {
     try { localStorage.setItem(STORE_KEY, code); } catch { /* sin almacenamiento */ }
   };
 
-  const base = shop.currencyBase && BY_CODE[shop.currencyBase] ? shop.currencyBase : 'USD';
+  const base = shop.currencyBase && BY_CODE[shop.currencyBase] ? shop.currencyBase : 'CUP';
   const rateCUP = Number(shop.rateCUP) || 0;
   const rateEUR = Number(shop.rateEUR) || 0;
 

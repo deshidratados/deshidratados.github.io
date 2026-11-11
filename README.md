@@ -62,7 +62,7 @@ Una vez dentro del panel, en **Configuración**:
 
 | Campo | Qué es |
 |---|---|
-| `Moneda de los precios` | En qué moneda escribes los precios en Productos (por defecto `USD`) |
+| `Moneda de los precios` | En qué moneda escribes los precios en Productos (por defecto `CUP`) |
 | `CUP por 1 USD` | Tipo de cambio manual hacia el peso cubano. **Ajústalo cuando cambie el mercado** |
 | `EUR por 1 USD` | Tipo de cambio manual hacia el euro |
 | `Envío gratis a partir de` | Monto en la moneda base |

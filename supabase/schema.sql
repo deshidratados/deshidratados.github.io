@@ -219,7 +219,7 @@ insert into public.presentations (slug, name, sort_order) values
 on conflict (slug) do nothing;
 
 insert into public.settings (key, value) values
-  ('shopName', 'Solaria'),
+  ('shopName', 'Salud & Vida'),
   ('whatsapp', '5354410057'),
   ('freeShip', '100'),
   ('email',     'hola@solaria.cu'),
@@ -227,7 +227,7 @@ insert into public.settings (key, value) values
   ('hours',     E'Lun – Vie · 9:00 – 18:00\nSábado · 9:00 – 14:00\nDomingo · el sol descansa'),
   ('heroPromo', ''),
   ('heroPromo', ''),
-  ('currencyBase', 'USD'),
+  ('currencyBase', 'CUP'),
   ('rateCUP',      '250'),
   ('rateEUR',      '0.92'),
   -- Remitente de los emails. Se lee SIEMPRE desde aquí dentro de la

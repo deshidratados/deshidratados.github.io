@@ -1,7 +1,8 @@
 # Configuración de pagos con Enzona
 
-Integración con la **API Payment v1.0.0** de Enzona (Cuba). Cobra en **CUP** y
-convierte el total del pedido usando el tipo de cambio `rateCUP` de la tabla
+Integración con la **API Payment v1.0.0** de Enzona (Cuba). Cobra en **CUP**.
+Si la moneda base de la tienda es **CUP** (valor por defecto), el importe se
+envía tal cual; si es USD o EUR, se convierte a CUP con `rateCUP` de la tabla
 `settings` (igual que la tienda).
 
 ## Cómo funciona

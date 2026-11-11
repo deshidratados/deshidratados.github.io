@@ -13,7 +13,7 @@ export const SHOP = {
   // MULTI-MONEDA. Los precios del catálogo se guardan en `currencyBase`.
   // rateCUP = cuántos pesos cubanos vale 1 USD. rateEUR = cuántos euros vale 1 USD.
   // NO son automáticos: el negocio los ajusta desde /admin → Configuración.
-  currencyBase: 'USD',
+  currencyBase: 'CUP',
   rateCUP: '250',
   rateEUR: '0.92'
 };
